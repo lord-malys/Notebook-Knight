@@ -1,0 +1,24 @@
+# OS clutter
+.DS_Store
+Thumbs.db
+
+# Temporary exports
+*.tmp
+*.bak
+
+# Large raw working files
+*.psd
+*.clip
+*.kra
+
+# Node / web tooling
+node_modules/
+dist/
+.cache/
+
+# Python
+__pycache__/
+*.pyc
+
+# Local notes
+local_notes/
