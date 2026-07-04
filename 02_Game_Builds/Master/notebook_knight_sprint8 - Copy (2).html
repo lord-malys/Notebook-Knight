@@ -6076,14 +6076,6 @@ const Game = (function () {
     PM.addToStorage(state.player, 'chs_padded_vest');
     PM.equipItem(state.player, 'wpn_rusty_sword');
     PM.equipItem(state.player, 'chs_padded_vest');
-    // TEMP: one of each new Batch-1 chest armor, dropped straight into storage so their V2 art
-    // can be equipped/tested from the Equipment screen without needing to buy them first. Safe
-    // to remove once these are wired into the actual shop instead of only being test gear.
-    PM.addToStorage(state.player, 'chs_leather_armor');
-    PM.addToStorage(state.player, 'chs_copper_breastplate');
-    PM.addToStorage(state.player, 'chs_bronze_cuirass');
-    PM.addToStorage(state.player, 'chs_chainmail');
-    PM.addToStorage(state.player, 'chs_iron_plate');
     PM.addToStorage(state.player, 'cns_potion_small', 2);
     goTo('town');
   }
@@ -6302,15 +6294,6 @@ const Game = (function () {
     // sleeves) - the original chr_chs_padded_vest_v2.png is left in place, unused, in case
     // this revision needs to be rolled back.
     chsQuiltedVestV2:     'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_padded_vest_v2b.png',
-    // Batch 1 chest armor (extracted/aligned from the first ChatGPT batch sheet). Iron Plate's
-    // source art includes its own greaves/boots baked in - drawn under the default boots layer
-    // like every other chest piece, so there may be a visible boot-on-boot overlap until a
-    // dedicated boots item exists; flagged as a known thing to check visually.
-    chsLeatherArmorV2:      'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_leather_armor_v2.png',
-    chsCopperBreastplateV2: 'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_copper_breastplate_v2.png',
-    chsBronzeCuirassV2:     'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_bronze_cuirass_v2.png',
-    chsChainmailV2:         'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_chainmail_v2.png',
-    chsIronPlateV2:         'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_iron_plate_v2.png',
 
     // Decorative hamlet art — bottom-anchored backdrop on the town screen
     artHamlet:          'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Town/art_hamlet.png.png',
@@ -6851,14 +6834,7 @@ const Game = (function () {
   // both genders instead of two.
   const EQUIP_ART_V2 = {
     weapon: { wpn_rusty_sword: 'wpnRustySwordV2' },
-    chest:  {
-      chs_padded_vest:        'chsQuiltedVestV2',
-      chs_leather_armor:      'chsLeatherArmorV2',
-      chs_copper_breastplate: 'chsCopperBreastplateV2',
-      chs_bronze_cuirass:     'chsBronzeCuirassV2',
-      chs_chainmail:          'chsChainmailV2',
-      chs_iron_plate:         'chsIronPlateV2',
-    },
+    chest:  { chs_padded_vest: 'chsQuiltedVestV2' },
     boots:  {}, // no boots art yet - falls through to the default boots layer for everything
   };
 
