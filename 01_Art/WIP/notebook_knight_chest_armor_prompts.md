@@ -31,7 +31,9 @@ tunic, since it's the only visible torso garment and needs to read as complete o
 Additionally, since these are meant to look like full matching armor sets, extend coverage down
 onto the lower legs (shin/greave area) in the same material, rather than leaving the legs bare
 under the tunic like the base reference - the legs should visibly look armored/protected too,
-not just the torso.
+not just the torso. Stop at the ankle - do NOT draw the actual foot, shoe, or boot shape; feet
+are handled by a separate boots layer that renders on top, so drawing feet here causes them to
+double up visually. Greaves/shin guards yes, boots/shoes no.
 
 Panel 1: Leather Armor - simple tanned hide cuirass, visibly stitched-together leather panels,
 laced sides, humble and practical, no metal. Include matching leather leg wraps/wrappings over
@@ -85,7 +87,9 @@ around mid-thigh) since it's the only visible torso garment and needs to read as
 own. For the plate-armor panels, also extend matching leg armor down onto the shins so the look
 reads as a full armored set rather than a chest piece over bare legs - see individual panels
 below. The two robe panels don't need separate leg armor; their own length already covers the
-upper legs.
+upper legs. Stop at the ankle - do NOT draw the actual foot, shoe, or boot shape; feet are
+handled by a separate boots layer that renders on top, so drawing feet here causes them to
+double up visually. Greaves/shin guards yes, boots/shoes no.
 
 Panel 1: Scholar's Robes - a light, flowing robe/tunic (falls a bit longer than the others, to
 mid-thigh), simple rune symbols stitched along the hem and collar, soft draped cloth folds
@@ -140,7 +144,9 @@ tunic, since it's the only visible torso garment and needs to read as complete o
 the scale/plate panels, also extend matching leg armor down onto the shins so the look reads as
 a full armored set rather than a chest piece over bare legs - see individual panels below. Shadow
 Garb is the one exception - it should stay bare-legged, since minimal coverage is the whole point
-of that piece.
+of that piece. Stop at the ankle - do NOT draw the actual foot, shoe, or boot shape; feet are
+handled by a separate boots layer that renders on top, so drawing feet here causes them to double
+up visually. Greaves/shin guards yes, boots/shoes no.
 
 Panel 1: Shadow Garb - a dark, almost featureless fitted garment that looks woven from solid
 shadow or smoke, tattered/wispy hem, deliberately minimal surface detail ("unnervingly light"

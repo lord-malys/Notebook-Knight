@@ -87,6 +87,13 @@ extend matching leg armor down onto the shins so the character doesn't look armo
 bare-legged below - note per-panel below which items warrant this and which don't (light cloth
 pieces and robes usually don't need separate greaves; anything metal/plate/scale usually does).
 
+IMPORTANT boundary rule: leg armor must stop at the ankle/shin - never draw the actual foot or
+boot/shoe shape. Feet are always handled by the separate boots layer (equipped boots art, or the
+default boots when nothing's equipped there), which draws on top of the chest art. If a chest
+panel draws its own feet too, they'll double up with whatever the boots layer draws underneath -
+this happened on the first Iron Plate generation and had to be fixed by trimming the art
+afterward. Greaves/knee-guards are fine and encouraged; shoes/boots are not.
+
 Panel 1: [Item 1 name] - [1-2 sentence description, note leg armor yes/no].
 Panel 2: [Item 2 name] - [1-2 sentence description, note leg armor yes/no].
 Panel 3: [Item 3 name] - [1-2 sentence description, note leg armor yes/no].
