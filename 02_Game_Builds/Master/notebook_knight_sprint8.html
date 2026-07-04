@@ -289,6 +289,7 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
   /* Matches the delivered art's actual ratio (1350x630, ~2.14:1) so nothing crops or letterboxes. */
   aspect-ratio: 1350 / 630;
   padding: 0;
+  filter: grayscale(1);
 }
 /* Once art is showing, the header/quote become transparent overlays positioned to match the
    panel art's two zones (a ruled line splits the art ~58% down). */
@@ -632,6 +633,54 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
   color: #4a4a4a;
   width: 100%;
 }
+/* Hold-to-preview "write on the sticky note" overlay (see writeOnNote()/stopWritingOnNote() in
+   renderTown). Same position/sizing as .town-quest-note-text so the handwriting reads as ink
+   appearing on the same patch of paper. Hidden by default; a translucent paper-toned backdrop
+   keeps whatever's normally there (the "None" label or active-quest text) from showing through
+   while it's active. */
+.town-quest-note-scratch {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  max-height: 55%;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5%;
+  text-align: center;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+.town-quest-note-scratch-title {
+  font-family: 'Patrick Hand', cursive;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 1.0em;
+  line-height: 1.15;
+  color: #2a2a2a;
+  width: 100%;
+}
+.town-quest-note-scratch-desc {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.68em;
+  line-height: 1.25;
+  color: #4a4a4a;
+  width: 100%;
+}
+/* Blinking "pen" cursor trailing whichever line is currently being written */
+.nb-write-cursor {
+  display: inline-block;
+  margin-left: 1px;
+  animation: nb-cursor-blink 0.9s steps(1) infinite;
+}
+@keyframes nb-cursor-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
 /* Invisible hit zone over the note's curled bottom-right corner — doubles as
    the Abandon Quest button so it doesn't need its own art. */
 .town-quest-note-abandon {
@@ -813,7 +862,7 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
   display: block;
   width: 100%;
   aspect-ratio: 972 / 302;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  filter: grayscale(1) drop-shadow(0 2px 4px rgba(0,0,0,0.3));
   cursor: pointer;
 }
 
@@ -5970,6 +6019,30 @@ const Game = (function () {
     } catch (e) { /* audio unavailable - fail silently, never blocks navigation */ }
   }
 
+  // Looping scratch sound for the hold-to-preview "write on the sticky note" effect (see
+  // writeOnNote()/stopWritingOnNote() in renderTown). Reuses the same soft-scribble sample as
+  // the screen-transition SFX rather than a separate asset, just looped for the duration of the
+  // hold and stopped as soon as writing ends (button release or the text finishes typing).
+  let _sfxWriteEl = null;
+  function playWriteSfx() {
+    if (isMuted()) return;
+    try {
+      if (!_sfxWriteEl) {
+        _sfxWriteEl = new Audio(SFX_SCREEN_TRANSITION);
+        _sfxWriteEl.loop = true;
+        _sfxWriteEl.volume = 0.35;
+      }
+      if (_sfxWriteEl.paused) {
+        _sfxWriteEl.currentTime = 0;
+        _sfxWriteEl.play().catch(() => {});
+      }
+    } catch (e) { /* audio unavailable - fail silently */ }
+  }
+  function stopWriteSfx() {
+    if (!_sfxWriteEl) return;
+    try { _sfxWriteEl.pause(); _sfxWriteEl.currentTime = 0; } catch (e) { /* ignore */ }
+  }
+
   // Icon-only toggle button - the speaker icon is baked into the art itself (no code-drawn
   // label), so this just swaps between the two pre-made states and flips the persisted flag.
   // wrapClass lets the same button be dropped into different fixed-position contexts (the game
@@ -6491,16 +6564,16 @@ const Game = (function () {
   // production:false → use procedural Sketch icon (art placeholder)
   const TOWN_BUILDINGS = {
     left: [
-      { id: 'shop',        name: 'Shop',        production: true, idleKey: 'bldShoppeIdle',     selKey: 'bldShoppeSel'     },
-      { id: 'blacksmith',  name: 'Blacksmith',  production: true, idleKey: 'bldBlacksmithIdle', selKey: 'bldBlacksmithSel' },
-      { id: 'armorshop',   name: 'Armor Shop',  production: true, idleKey: 'bldArmorshopIdle',  selKey: 'bldArmorshopSel'  },
-      { id: 'library',     name: 'Library',     production: true, idleKey: 'bldLibraryIdle',    selKey: 'bldLibrarySel'    },
+      { id: 'shop',        name: 'Shop',        production: true, idleKey: 'bldShoppeIdle',     selKey: 'bldShoppeSel',     blurb: 'Buy and sell general goods.' },
+      { id: 'blacksmith',  name: 'Blacksmith',  production: true, idleKey: 'bldBlacksmithIdle', selKey: 'bldBlacksmithSel', blurb: 'Forge and upgrade weapons.' },
+      { id: 'armorshop',   name: 'Armor Shop',  production: true, idleKey: 'bldArmorshopIdle',  selKey: 'bldArmorshopSel',  blurb: 'Fit sturdy armor and shields.' },
+      { id: 'library',     name: 'Library',     production: true, idleKey: 'bldLibraryIdle',    selKey: 'bldLibrarySel',    blurb: 'Read old lore and records.' },
     ],
     right: [
-      { id: 'inn',         name: 'The Inn',      production: true, idleKey: 'bldInnIdle',         selKey: 'bldInnSel'         },
-      { id: 'church',      name: 'Church',       production: true, idleKey: 'bldChurchIdle',      selKey: 'bldChurchSel'      },
-      { id: 'guildhall',   name: 'Guild Hall',   production: true, idleKey: 'bldGuildhallIdle',   selKey: 'bldGuildhallSel'   },
-      { id: 'noticeboard', name: 'Quest Board', production: true, idleKey: 'bldNoticeboardIdle', selKey: 'bldNoticeboardSel' },
+      { id: 'inn',         name: 'The Inn',      production: true, idleKey: 'bldInnIdle',         selKey: 'bldInnSel',         blurb: 'Rest to restore HP and MP.' },
+      { id: 'church',      name: 'Church',       production: true, idleKey: 'bldChurchIdle',      selKey: 'bldChurchSel',      blurb: 'Prayers, healing, and blessings.' },
+      { id: 'guildhall',   name: 'Guild Hall',   production: true, idleKey: 'bldGuildhallIdle',   selKey: 'bldGuildhallSel',   blurb: 'Take on official quests.' },
+      { id: 'noticeboard', name: 'Quest Board', production: true, idleKey: 'bldNoticeboardIdle', selKey: 'bldNoticeboardSel', blurb: 'Browse the town\'s job board.' },
     ],
   };
 
@@ -6550,6 +6623,61 @@ const Game = (function () {
     const p = state.player;
     const wrap = el('div', 'town-screen-wrap');
 
+    // Hold-to-preview "write on the sticky note" state. Populated once the sticky note itself
+    // is built further down (see noteScratchEl assignment near the note construction); declared
+    // here so the building-button closures built above it can reference them - by the time a
+    // user can actually press-and-hold a button, render() has already finished and these are
+    // populated. writeOnNote()/stopWritingOnNote() simulate handwriting by revealing the
+    // building's name then its one-line purpose blurb one character at a time.
+    let noteScratchEl = null, noteScratchTitleEl = null, noteScratchDescEl = null;
+    let writeTimer = null, writeCursorSpan = null;
+
+    function placeWriteCursor(afterEl) {
+      if (!writeCursorSpan) {
+        writeCursorSpan = document.createElement('span');
+        writeCursorSpan.className = 'nb-write-cursor';
+        writeCursorSpan.textContent = '|';
+      }
+      afterEl.appendChild(writeCursorSpan);
+    }
+    function removeWriteCursor() {
+      if (writeCursorSpan && writeCursorSpan.parentNode) writeCursorSpan.parentNode.removeChild(writeCursorSpan);
+    }
+    function writeOnNote(name, blurb) {
+      if (!noteScratchEl) return;
+      clearTimeout(writeTimer);
+      noteScratchTitleEl.textContent = '';
+      noteScratchDescEl.textContent = '';
+      noteScratchEl.style.display = 'flex';
+      noteScratchEl.classList.add('is-writing');
+      playWriteSfx();
+      let i = 0;
+      function typeTitle() {
+        noteScratchTitleEl.textContent = name.slice(0, i);
+        placeWriteCursor(noteScratchTitleEl);
+        if (i < name.length) { i++; writeTimer = setTimeout(typeTitle, 32); }
+        else { writeTimer = setTimeout(startDesc, 220); }
+      }
+      let j = 0;
+      function startDesc() { j = 0; typeDesc(); }
+      function typeDesc() {
+        noteScratchDescEl.textContent = blurb.slice(0, j);
+        placeWriteCursor(noteScratchDescEl);
+        if (j < blurb.length) { j++; writeTimer = setTimeout(typeDesc, 20); }
+        else { removeWriteCursor(); stopWriteSfx(); }
+      }
+      typeTitle();
+    }
+    function stopWritingOnNote() {
+      clearTimeout(writeTimer);
+      removeWriteCursor();
+      stopWriteSfx();
+      if (noteScratchEl) {
+        noteScratchEl.style.display = 'none';
+        noteScratchEl.classList.remove('is-writing');
+      }
+    }
+
     // ── Decorative hamlet art — sits behind everything, bottom-anchored & centered ──
     const hamletArt = document.createElement('img');
     hamletArt.src = SCENE_ASSETS.artHamlet;
@@ -6590,9 +6718,9 @@ const Game = (function () {
       }
       draw(false);
 
-      btn.addEventListener('pointerdown',  () => draw(true));
-      btn.addEventListener('pointerup',    () => { draw(false); handleBuildingTap(bld.id); });
-      btn.addEventListener('pointerleave', () => draw(false));
+      btn.addEventListener('pointerdown',  () => { draw(true); writeOnNote(bld.name, bld.blurb || ''); });
+      btn.addEventListener('pointerup',    () => { draw(false); stopWritingOnNote(); handleBuildingTap(bld.id); });
+      btn.addEventListener('pointerleave', () => { draw(false); stopWritingOnNote(); });
       btn.style.cursor = 'pointer';
       return btn;
     }
@@ -6606,6 +6734,9 @@ const Game = (function () {
       c.width = 384; c.height = 384;
       c.className = 'town-bld-canvas';
       btn.appendChild(c);
+      btn.addEventListener('pointerdown',  () => writeOnNote(bld.name, bld.blurb || ''));
+      btn.addEventListener('pointerup',    () => stopWritingOnNote());
+      btn.addEventListener('pointerleave', () => stopWritingOnNote());
       btn.onclick = () => handleBuildingTap(bld.id);
       btn.style.cursor = 'pointer';
       requestAnimationFrame(() => {
@@ -6700,6 +6831,16 @@ const Game = (function () {
       // through to the equipment click either.
       noteWrap.style.pointerEvents = 'none';
     }
+    // Hold-to-preview overlay - hidden until a building button is pressed (see writeOnNote
+    // above). Appended last so it stacks visually on top of both the "None" label and any
+    // active-quest text, regardless of which of those two states rendered above.
+    noteScratchEl = el('div', 'town-quest-note-scratch');
+    noteScratchTitleEl = el('div', 'town-quest-note-scratch-title');
+    noteScratchDescEl = el('div', 'town-quest-note-scratch-desc');
+    noteScratchEl.appendChild(noteScratchTitleEl);
+    noteScratchEl.appendChild(noteScratchDescEl);
+    noteWrap.appendChild(noteScratchEl);
+
     dollWrap.appendChild(noteWrap);
 
     centerCol.appendChild(dollWrap);
