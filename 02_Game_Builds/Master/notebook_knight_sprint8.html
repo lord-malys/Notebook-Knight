@@ -357,7 +357,7 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
 /* Once art is showing, the header/quote become transparent overlays positioned to match the
    panel art's two zones (a ruled line splits the art ~58% down). */
 .npc-panel-art .npc-header {
-  position: absolute; top: 20%; left: 6%; right: 15%; bottom: auto;
+  position: absolute; top: 20%; left: 6%; right: 32%; bottom: auto;
   background: none; border: none; padding: 0; margin: 0;
 }
 .npc-panel-art .npc-dialogue {
@@ -365,14 +365,16 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
   background: none; border: none; padding: 0; margin: 0;
   overflow: hidden;
 }
-/* Per-NPC portrait sketch, in the corner the header's right:15% margin leaves free. Stays
+/* Per-NPC portrait sketch, sized/positioned per the user's marked reference box: a bigger panel
+   in the upper-right, from near the top down to just above the ruled divider line. Widened the
+   header's right margin above (15%->32%) to make room so text doesn't run under it. Stays
    hidden (default, below) until the shared panel art is actually showing - see above. */
 .npc-portrait { display: none; }
 .npc-panel-art .npc-portrait {
   display: block;
-  position: absolute; top: 20%; right: 2%; width: 13%; height: 38%;
+  position: absolute; top: 9%; right: 2%; width: 29%; height: 48%;
   background-size: contain;
-  background-position: bottom center;
+  background-position: top center;
   background-repeat: no-repeat;
 }
 
@@ -6241,6 +6243,11 @@ const Game = (function () {
     // Paper doll selected/pressed states
     dollMaleSel:     'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/Base/chr_male_paperdoll_selected.png',
     dollFemaleSel:   'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/Base/chr_female_paperdoll_selected.png',
+    // Bare base layer - no sword, no tunic - meant to sit underneath future armor-layer art in
+    // drawTownCharacter(). Not wired into rendering yet (no armor art exists to layer on top),
+    // registered here so it's ready when that lands. Never intended to be shown on its own.
+    dollMaleBare:    'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/Base/chr_male_paperdoll_notunic.png',
+    dollFemaleBare:  'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/Base/chr_female_paperdoll_notunic.png',
     // Decorative hamlet art — bottom-anchored backdrop on the town screen
     artHamlet:          'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Town/art_hamlet.png.png',
     // Town buildings — new icon assets (all fully production)
@@ -6276,8 +6283,8 @@ const Game = (function () {
     btnBackDown:       'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/Banners/ui_btn_back_pressed.png.png',
     // Reusable NPC name/dialogue panel — one blank frame behind every NPC across every location.
     panelNpcDialogue:  'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/Banners/ui_panel_npc_dialogue_clean.png',
-    // Per-NPC portrait sketches — sit in the empty corner of the npc-header zone (the header text
-    // box only spans to right:15%, leaving this slot free). Transparent-background pencil-line
+    // Per-NPC portrait sketches — sit in a panel in the upper-right of the npc-header zone
+    // (the header text column was narrowed to make room). Transparent-background pencil-line
     // art, one per major town NPC. Requires these PNGs to be pushed to main before they resolve.
     npcPortraitInnkeeper:   'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Town/npc_innkeeper_bertram_holt.png',
     npcPortraitBlacksmith:  'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Town/npc_master_smith_aldra_ironmark.png',
@@ -7230,14 +7237,21 @@ const Game = (function () {
     panel.appendChild(header);
     panel.appendChild(el('div', 'npc-dialogue', dialogueText));
 
-    // Per-NPC portrait sketch — sits in the corner the header's right:15% margin leaves free.
-    // Hidden via CSS until the shared panel frame art itself has loaded (see .npc-panel-art
-    // .npc-portrait below), so it never floats over the flat CSS-box fallback layout.
+    // Per-NPC portrait sketch — larger panel in the upper-right of the header zone. Hidden via
+    // CSS until the shared panel frame art itself has loaded (see .npc-panel-art .npc-portrait
+    // below), so it never floats over the flat CSS-box fallback layout.
     if (npc.portraitKey) {
       const portraitImg = _assetCache[npc.portraitKey];
       if (portraitImg) {
         const portrait = el('div', 'npc-portrait');
         portrait.style.backgroundImage = 'url(' + SCENE_ASSETS[npc.portraitKey] + ')';
+        // Optional per-NPC size/position override (inline styles win over the shared CSS rule) -
+        // e.g. the librarian's sketch reads small at the default box size, so it's sized up here.
+        if (npc.portraitBox) {
+          if (npc.portraitBox.top) portrait.style.top = npc.portraitBox.top;
+          if (npc.portraitBox.height) portrait.style.height = npc.portraitBox.height;
+          if (npc.portraitBox.width) portrait.style.width = npc.portraitBox.width;
+        }
         panel.appendChild(portrait);
       } else {
         _loadAsset(npc.portraitKey).then((loaded) => { if (loaded) render(); });
@@ -7650,6 +7664,10 @@ const Game = (function () {
       name: 'Oswin Vane',
       title: 'Head Librarian',
       portraitKey: 'npcPortraitLibrarian',
+      // Reads small at the default box size - sized up noticeably (previous +4pt height nudge
+      // wasn't enough), pulling top up to make room for the extra height. Height is the binding
+      // dimension for this image's contain-fit, so height is what actually controls its size.
+      portraitBox: { top: '5%', height: '56%' },
       identity: 'Thin, ink-stained, and perpetually distracted. He forgets names but never forgets books.',
       dialogue(p) {
         const done = p.completedQuests.length;
