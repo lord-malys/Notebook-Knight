@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Notebook Knight</title><style>
-@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Architects+Daughter&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Architects+Daughter&family=Just+Me+Again+Down+Here&display=swap');
 
 * { box-sizing: border-box; }
 body {
@@ -91,6 +91,23 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
 .btn-small { font-size: 0.9em; padding: 4px 10px; }
 .btn-disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+/* Reuses the same quick-sketch box art as .item-row, just squashed to a button-ish aspect via
+   background-size. :active (not JS) swaps in the bolder "pressed" variant, since this is a
+   plain native <button> - no canvas/pointer-event plumbing needed like the icon buttons. */
+.btn-sketch {
+  background-color: transparent;
+  background-image: url('https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_box_item_row.png');
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  border: none;
+  border-radius: 0;
+  color: #2a1f0e;
+}
+.btn-sketch:hover { background-color: transparent; transform: none; }
+.btn-sketch:active {
+  background-image: url('https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_box_item_row_pressed.png');
+  transform: translateY(1px);
+}
 
 .header-bar {
   border-bottom: 2px dashed #999;
@@ -173,13 +190,14 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
 
 .item-list { display: flex; flex-direction: column; gap: 8px; }
 .item-row {
-  border: 1.5px solid #888;
-  border-radius: 8px;
-  padding: 8px 10px;
+  padding: 10px 14px;
   display: grid;
   grid-template-columns: 1fr;
   gap: 2px;
-  background: #fffef9;
+  background-color: transparent;
+  background-image: url('https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_box_item_row.png');
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
 }
 .item-row-with-icon {
   display: flex;
@@ -199,9 +217,33 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
 .empty-note { color: #999; font-style: italic; }
 
 .equip-layout { display: flex; gap: 16px; flex-wrap: wrap; }
-.equip-preview canvas { border: 2px solid #444; border-radius: 6px; background: #fff; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3)); }
-.equip-slots { flex: 1; min-width: 200px; }
-.slot-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dotted #aaa; padding: 4px 0; gap: 6px; }
+/* Matches .town-doll-wrap's layout so the reused .town-doll-canvas (same doll art, same
+   drawTownCharacter call) sizes/centers identically to how it looks on the town screen. */
+.equip-preview { position: relative; display: flex; align-items: center; justify-content: center; }
+/* Locks each slot row to the notebook paper's actual printed ruled lines, instead of just
+   spreading rows out to match the doll's height (which drifted off the real lines - see below).
+   Measured directly from bg_notebook_paper.png: the ruled lines repeat every ~2.995% of the
+   image's own height, starting ~6.32% from the top. Since .nb-page-bg stretches that image to
+   exactly fill the artboard (background-size:100% 100%), those percentages carry over 1:1 to
+   the artboard's rendered height. nb-content itself starts 9% down (padding-top:16%-of-width =
+   9%-of-height on this fixed 9:16 frame) - within a fraction of a percent of that first line
+   already, so only a tiny nudge is needed to land exactly on it. This only lines up perfectly
+   while the page is unscrolled (the ruled-line art is a fixed background, this row list scrolls
+   with the content), which covers the equipment screen's normal, most-common state. */
+.equip-slots {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  margin-top: calc(min(100vh, calc(100vw * 16 / 9)) * 0.0031);
+}
+.slot-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 6px;
+  height: calc(min(100vh, calc(100vw * 16 / 9)) * 0.029948);
+}
 .slot-label { font-weight: bold; min-width: 90px; }
 .slot-value { flex: 1; }
 
@@ -310,10 +352,6 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
 .exploration-event-panel { background: #edf5ea; border: 1.5px dashed #4a8a4a; border-radius: 8px; padding: 8px 12px; margin-top: 8px; }
 
 /* ---- Equipment stat block (replaces Training Yard) ---- */
-.equip-stat-block { display: flex; flex-wrap: wrap; gap: 4px 10px; padding: 6px 4px; font-size: 0.82em; color: #444; border-top: 1px dashed #ccc; margin-top: 4px; }
-.equip-stat-block span { white-space: nowrap; }
-.stat-lv { font-weight: bold; color: #333; font-size: 1.05em; }
-.stat-xp { color: #6a5fad; }
 
 /* ---- Area flavor lines ---- */
 .area-flavor { font-size: 0.85em; color: #7a6a5a; font-style: italic; margin: 1px 0 4px; }
@@ -643,33 +681,40 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 80%;
-  max-height: 55%;
+  /* The sticky-note PNG has a lot of transparent padding around the actual yellow square (for
+     its rotation/drop-shadow bounding box) - the paper itself is only ~60% of the image's own
+     width, centered. 52% keeps text safely inside that paper instead of the ~96%-wide box we
+     had before, which let long blurbs spill past the note's left/right edges. */
+  width: 52%;
+  max-height: 62%;
   display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5%;
+  gap: 4%;
   text-align: center;
   pointer-events: none;
   overflow: hidden;
   z-index: 2;
 }
 .town-quest-note-scratch-title {
-  font-family: 'Patrick Hand', cursive;
-  font-style: italic;
-  font-weight: 700;
-  font-size: 1.0em;
-  line-height: 1.15;
+  font-family: 'Just Me Again Down Here', 'Patrick Hand', cursive;
+  /* Scales with the artboard's own width (not the raw viewport, which can be much wider than
+     the artboard on tall desktop windows) so it stays legible on narrow mobile screens - the
+     first clamp value is a hard floor that guarantees a minimum readable size there. */
+  font-size: clamp(1.9em, calc(min(100vw, calc(100vh * 9 / 16)) * 0.09), 3.0em);
+  line-height: 1.05;
   color: #2a2a2a;
   width: 100%;
+  word-break: break-word;
 }
 .town-quest-note-scratch-desc {
-  font-family: 'Patrick Hand', cursive;
-  font-size: 0.68em;
-  line-height: 1.25;
+  font-family: 'Just Me Again Down Here', 'Patrick Hand', cursive;
+  font-size: clamp(1.35em, calc(min(100vw, calc(100vh * 9 / 16)) * 0.062), 2.05em);
+  line-height: 1.1;
   color: #4a4a4a;
   width: 100%;
+  word-break: break-word;
 }
 /* Blinking "pen" cursor trailing whichever line is currently being written */
 .nb-write-cursor {
@@ -787,7 +832,10 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
   width: calc(min(100vw, calc(100vh * 9 / 16)) * 0.12);
   height: min(100vh, calc(100vw * 16 / 9));
   transform: translateY(-50%) translateX(calc(-1 * min(100vw, calc(100vh * 9 / 16)) / 2));
-  z-index: 2;
+  /* z-index 3 (not 2, same as .nb-page-header-cap) so the header-cap's repainted top strip -
+     appended later in DOM - never papers over the Lv/XP stats drawn near the top of this
+     canvas. */
+  z-index: 3;
   pointer-events: none;
 }
 
@@ -6194,6 +6242,15 @@ const Game = (function () {
     btnBookmarkDown:   'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_btn_bookmark_pressed.png',
     btnCloseUp:        'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_btn_close_idle.png',
     btnCloseDown:      'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_btn_close_pressed.png.png',
+    // Shared "quick pencil sketch" outline box — same single asset used as the background for
+    // every .item-row across every screen (Shop, Blacksmith, Armor Shop, Library, Church,
+    // Equipment, quest lists) AND as the Equip/Unequip button chrome (stretched to a shorter
+    // aspect via CSS background-size for the button, full-row aspect for item rows). Referenced
+    // directly by URL in the CSS below (not JS load-and-swap) since it's a single static image
+    // with no per-instance variation. Listed here too just to keep every art asset URL
+    // documented in one place.
+    boxItemRow:        'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_box_item_row.png',
+    boxItemRowPressed: 'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_box_item_row_pressed.png',
     // Save Game button — same blank-chrome-plus-code-drawn-label trick as Back to Town.
     btnSaveUp:         'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_btn_save_idle.png.png',
     btnSaveDown:       'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_btn_save_pressed.png.png',
@@ -6564,14 +6621,14 @@ const Game = (function () {
   // production:false → use procedural Sketch icon (art placeholder)
   const TOWN_BUILDINGS = {
     left: [
-      { id: 'shop',        name: 'Shop',        production: true, idleKey: 'bldShoppeIdle',     selKey: 'bldShoppeSel',     blurb: 'Buy and sell general goods.' },
-      { id: 'blacksmith',  name: 'Blacksmith',  production: true, idleKey: 'bldBlacksmithIdle', selKey: 'bldBlacksmithSel', blurb: 'Forge and upgrade weapons.' },
-      { id: 'armorshop',   name: 'Armor Shop',  production: true, idleKey: 'bldArmorshopIdle',  selKey: 'bldArmorshopSel',  blurb: 'Fit sturdy armor and shields.' },
-      { id: 'library',     name: 'Library',     production: true, idleKey: 'bldLibraryIdle',    selKey: 'bldLibrarySel',    blurb: 'Read old lore and records.' },
+      { id: 'shop',        name: 'Shop',        production: true, idleKey: 'bldShoppeIdle',     selKey: 'bldShoppeSel',     blurb: 'Potions, rings, and amulets - buy or sell.' },
+      { id: 'blacksmith',  name: 'Blacksmith',  production: true, idleKey: 'bldBlacksmithIdle', selKey: 'bldBlacksmithSel', blurb: 'Buy weapons and shields.' },
+      { id: 'armorshop',   name: 'Armor Shop',  production: true, idleKey: 'bldArmorshopIdle',  selKey: 'bldArmorshopSel',  blurb: 'Buy helmets, armor, and boots.' },
+      { id: 'library',     name: 'Library',     production: true, idleKey: 'bldLibraryIdle',    selKey: 'bldLibrarySel',    blurb: 'Buy spellbooks and staves; browse lore quests.' },
     ],
     right: [
       { id: 'inn',         name: 'The Inn',      production: true, idleKey: 'bldInnIdle',         selKey: 'bldInnSel',         blurb: 'Rest to restore HP and MP.' },
-      { id: 'church',      name: 'Church',       production: true, idleKey: 'bldChurchIdle',      selKey: 'bldChurchSel',      blurb: 'Prayers, healing, and blessings.' },
+      { id: 'church',      name: 'Church',       production: true, idleKey: 'bldChurchIdle',      selKey: 'bldChurchSel',      blurb: 'Healing, blessings, and quests.' },
       { id: 'guildhall',   name: 'Guild Hall',   production: true, idleKey: 'bldGuildhallIdle',   selKey: 'bldGuildhallSel',   blurb: 'Take on official quests.' },
       { id: 'noticeboard', name: 'Quest Board', production: true, idleKey: 'bldNoticeboardIdle', selKey: 'bldNoticeboardSel', blurb: 'Browse the town\'s job board.' },
     ],
@@ -7120,7 +7177,7 @@ const Game = (function () {
 
   return {
     render, goTo, startNewGame, saveGame, loadGame, hasSave, showToast, showConfirm,
-    state, resolveEquipped, renderHeader, renderPageBg, renderLocationBanner, renderNpcPanel, $, el, rand, fmtRange,
+    state, resolveEquipped, renderHeader, renderPageBg, renderLocationBanner, renderNpcPanel, drawTownCharacter, $, el, rand, fmtRange,
     ITEMS, ITEM_TYPE, WEAPON_HANDED, ENEMIES, QUEST_AREAS, QUESTS, LOADOUT_LIMITS, PM, CE, QuestsData
   };
 })();
@@ -7865,39 +7922,24 @@ const Game = (function () {
     boots: 'Boots', back: 'Back', ring1: 'Ring 1', ring2: 'Ring 2', amulet: 'Amulet'
   };
 
-  function drawCharPreview(canvas, player) {
-    const ctx = canvas.getContext('2d');
-    Sketch.drawNotebookBg(ctx, canvas.width, canvas.height);
-    Sketch.drawCharacter(ctx, canvas.width / 2, canvas.height - 70, 1, player.gender, G.resolveEquipped(player));
-  }
-
   // ---------- EQUIPMENT SCREEN (town) ----------
   G.renderEquipment = function (root) {
     const wrap = G.el('div', 'screen equipment-screen');
-    const _nbh = G.renderHeader(false); wrap.appendChild(_nbh); const _nbc = _nbh.nbContent || wrap;
-    _nbc.appendChild(G.el('h2', null, 'Equipment'));
+    // "Equipment" now sits in the persistent name slot at the top, same as every other screen's
+    // location title, instead of a separate in-content <h2> - the stat line that used to sit
+    // next to the doll is gone too, since the left margin already shows every one of those
+    // stats live on every screen.
+    const _nbh = G.renderHeader('Equipment'); wrap.appendChild(_nbh); const _nbc = _nbh.nbContent || wrap;
 
     const p = G.state.player;
     const layout = G.el('div', 'equip-layout');
     const previewBox = G.el('div', 'equip-preview');
     const canvas = document.createElement('canvas');
-    canvas.width = 220; canvas.height = 260;
+    // Same intrinsic size/class as the town screen's doll canvas so it draws identically here -
+    // both pull from the exact same equipped gear via drawTownCharacter.
+    canvas.width = 250; canvas.height = 400;
+    canvas.className = 'town-doll-canvas';
     previewBox.appendChild(canvas);
-    // Compact stat summary — replaces the old Training Yard screen
-    const total = PM.computeEquippedStats(p);
-    const statBlock = G.el('div', 'equip-stat-block');
-    statBlock.innerHTML = [
-      `<span class="stat-lv">Lv.${p.level}</span>`,
-      p.level < PM.MAX_LEVEL ? `<span class="stat-xp">${p.xp}/${p.xpToNext} XP</span>` : `<span class="stat-xp">MAX</span>`,
-      `<span>HP ${p.hp}/${total.maxHp}</span>`,
-      total.maxMp > 0 ? `<span>MP ${p.mp}/${total.maxMp}</span>` : '',
-      `<span>ATK ${total.atk}</span>`,
-      `<span>DEF ${total.def}</span>`,
-      `<span>SPD ${total.spd}</span>`,
-      total.magicPower > 0 ? `<span>PWR ${total.magicPower}</span>` : '',
-      `<span>Quests: ${p.completedQuests.length}</span>`,
-    ].filter(Boolean).join('');
-    previewBox.appendChild(statBlock);
     layout.appendChild(previewBox);
 
     const slotsBox = G.el('div', 'equip-slots');
@@ -7907,7 +7949,7 @@ const Game = (function () {
       row.appendChild(G.el('div', 'slot-label', SLOT_LABELS[slotKey]));
       row.appendChild(G.el('div', 'slot-value', itemId ? ITEMS[itemId].name : '(empty)'));
       if (itemId) {
-        const btn = G.el('button', 'btn btn-small', 'Unequip');
+        const btn = G.el('button', 'btn btn-small btn-sketch', 'Unequip');
         btn.onclick = () => {
           const result = PM.unequipSlot(p, slotKey);
           if (result.ok) { PM.addToStorage(p, result.itemId); G.showToast(result.message); }
@@ -7920,7 +7962,7 @@ const Game = (function () {
     layout.appendChild(slotsBox);
     _nbc.appendChild(layout);
 
-    _nbc.appendChild(G.el('h3', null, 'Town Storage (equippable items)'));
+    _nbc.appendChild(G.el('h3', null, 'Storage'));
     const storageList = G.el('div', 'item-list');
     const uniqueStorage = [...new Set(p.storage)];
     if (uniqueStorage.length === 0) storageList.appendChild(G.el('div', 'empty-note', 'Nothing in storage.'));
@@ -7937,7 +7979,7 @@ const Game = (function () {
       textCol.appendChild(G.el('div', 'item-name', `${item.name} ${count > 1 ? 'x' + count : ''}`));
       textCol.appendChild(G.el('div', 'item-stats', describeItem(item)));
       row.appendChild(textCol);
-      const btn = G.el('button', 'btn btn-small', 'Equip');
+      const btn = G.el('button', 'btn btn-small btn-sketch', 'Equip');
       btn.onclick = () => {
         const result = PM.equipItem(p, itemId);
         if (result.ok) {
@@ -7976,7 +8018,7 @@ const Game = (function () {
     }
 
     root.appendChild(wrap);
-    requestAnimationFrame(() => drawCharPreview(canvas, p));
+    requestAnimationFrame(() => G.drawTownCharacter(canvas, p));
   };
 
   function spellStatLine(spell) {
@@ -9177,7 +9219,8 @@ function bootGame() { Game.render(); }
 if (document.fonts && document.fonts.load) {
   Promise.all([
     document.fonts.load('16px "Patrick Hand"'),
-    document.fonts.load('16px "Architects Daughter"')
+    document.fonts.load('16px "Architects Daughter"'),
+    document.fonts.load('16px "Just Me Again Down Here"')
   ]).catch(function(){}).then(bootGame);
   bootGame();
 } else { bootGame(); }
