@@ -83,7 +83,8 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
   cursor: pointer;
   transition: transform 0.06s ease;
 }
-.btn:hover { transform: translateY(-1px); background: #f3f3f3; }
+/* background-color (not the background shorthand) - the shorthand resets background-image/size/repeat to none/auto too, which was wiping out .btn-sketch's border art on hover, and its background-size specifically on a real click (hover+active together), leaving a tiny unstretched corner fragment instead of the full pressed art. */
+.btn:hover { transform: translateY(-1px); background-color: #f3f3f3; }
 .btn:active { transform: translateY(1px); }
 .btn-primary { background: #ffe9a8; border-color: #b8860b; }
 .btn-secondary { background: #d7e7ff; border-color: #5b7fb0; }
@@ -102,8 +103,19 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
   border: none;
   border-radius: 0;
   color: #2a1f0e;
+  font-size: 1.25em;
+  padding: 6px 22px;
+  margin-right: 10px;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 .btn-sketch:hover { background-color: transparent; transform: none; }
+/* Gold cost stacked under "Buy" inside the button itself (see renderItemList/merchant offer),
+   instead of its own separate line in the item text column - keeps rows from growing so tall. */
+.btn-sketch-cost { display: block; font-size: 0.85em; color: #8a6d00; margin-top: 2px; }
 .btn-sketch:active {
   background-image: url('https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_box_item_row_pressed.png');
   transform: translateY(1px);
@@ -190,15 +202,25 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
 
 .item-list { display: flex; flex-direction: column; gap: 8px; }
 .item-row {
-  padding: 10px 14px;
+  padding: 8px 14px 8px 3px;
   display: grid;
   grid-template-columns: 1fr;
   gap: 2px;
-  background-color: transparent;
-  background-image: url('https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_box_item_row.png');
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
+  background: none;
+  /* 9-slice border-image instead of a stretched background: the corner slice (measured from the
+     source art - the rounded corner cap extends about 110px into the 1196x302 sketch) stays at
+     its own proportions and only the straight edges stretch, so tall quest rows don't warp the
+     corners into the content like a flat 100%/100% background stretch did. */
+  border-style: solid;
+  border-width: 26px;
+  border-image-source: url('https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_box_item_row.png');
+  border-image-slice: 110 fill;
+  border-image-repeat: stretch;
 }
+/* Quest list rows (Guild Hall, Church, Library lore quests, Notice Board) pack in a lot more
+   text than a storage/shop row - extra inner padding on top of the border keeps that text
+   comfortably clear of the corners. */
+.item-row-quest { padding: 16px 22px; }
 .item-row-with-icon {
   display: flex;
   align-items: center;
@@ -209,11 +231,10 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
   border-radius: 6px;
 }
 .item-row-text { flex: 1; display: flex; flex-direction: column; gap: 1px; }
-.item-name { font-weight: bold; }
-.item-desc { color: #555; font-size: 0.9em; }
-.item-stats { color: #2c5f2d; font-size: 0.88em; }
-.item-value { color: #8a6d00; font-size: 0.88em; }
-.rarity { color: #888; font-size: 0.8em; }
+.item-name { font-weight: bold; font-size: 1.35em; }
+.item-desc { color: #555; font-size: 1.22em; }
+.item-stats { color: #2c5f2d; font-size: 1.18em; }
+.item-value { color: #8a6d00; font-size: 1.18em; }
 .empty-note { color: #999; font-style: italic; }
 
 .equip-layout { display: flex; gap: 16px; flex-wrap: wrap; }
@@ -343,6 +364,16 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
   position: absolute; top: 64%; left: 7%; right: 7%; bottom: 8%;
   background: none; border: none; padding: 0; margin: 0;
   overflow: hidden;
+}
+/* Per-NPC portrait sketch, in the corner the header's right:15% margin leaves free. Stays
+   hidden (default, below) until the shared panel art is actually showing - see above. */
+.npc-portrait { display: none; }
+.npc-panel-art .npc-portrait {
+  display: block;
+  position: absolute; top: 20%; right: 2%; width: 13%; height: 38%;
+  background-size: contain;
+  background-position: bottom center;
+  background-repeat: no-repeat;
 }
 
 /* ---- Quest difficulty hints ---- */
@@ -1002,6 +1033,15 @@ const RARITY = {
   RARE: 'Rare',
   EPIC: 'Epic',
   LEGENDARY: 'Legendary'
+};
+
+// Item-name text color per rarity tier (replaces the old plain-text "Common"/"Rare" label).
+const RARITY_COLOR = {
+  [RARITY.COMMON]: '#2b2b2b',
+  [RARITY.UNCOMMON]: '#2f7a6b',
+  [RARITY.RARE]: '#2a5db0',
+  [RARITY.EPIC]: '#7a3fa0',
+  [RARITY.LEGENDARY]: '#b8860b'
 };
 
 // Full element set. Legacy values kept for save compatibility.
@@ -6236,6 +6276,16 @@ const Game = (function () {
     btnBackDown:       'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/Banners/ui_btn_back_pressed.png.png',
     // Reusable NPC name/dialogue panel — one blank frame behind every NPC across every location.
     panelNpcDialogue:  'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/Banners/ui_panel_npc_dialogue_clean.png',
+    // Per-NPC portrait sketches — sit in the empty corner of the npc-header zone (the header text
+    // box only spans to right:15%, leaving this slot free). Transparent-background pencil-line
+    // art, one per major town NPC. Requires these PNGs to be pushed to main before they resolve.
+    npcPortraitInnkeeper:   'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Town/npc_innkeeper_bertram_holt.png',
+    npcPortraitBlacksmith:  'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Town/npc_master_smith_aldra_ironmark.png',
+    npcPortraitPriest:      'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Town/npc_church_keeper_sister_maeve.png',
+    npcPortraitLibrarian:   'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Town/npc_head_librarian_oswin_vane.png',
+    npcPortraitMerchant:    'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Town/npc_general_merchant_pip_corder.png',
+    npcPortraitGuildmaster: 'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Town/npc_guildmaster_commander_ressa_vale.png',
+    npcPortraitArmorer:     'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Town/npc_armorer_dorn_fennick.png',
     // Save Game and Exit Game, now square icon buttons matching Mute's style (replaces the wide
     // text-button versions above, which stay defined in case they're useful elsewhere later).
     btnBookmarkUp:     'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_btn_bookmark_idle.png.png',
@@ -6437,7 +6487,8 @@ const Game = (function () {
       // Load all 4 needed assets, then draw
       _loadAssets(['csPanel', dollKey, dollSelKey]).then(() => requestAnimationFrame(() => drawDoll(false)));
 
-      // Pointer events — swap to selected state on press, navigate on release
+      // Pointer events — swap to selected state on hover AND press, navigate on release
+      c.addEventListener('pointerenter', () => drawDoll(true));
       c.addEventListener('pointerdown',  () => drawDoll(true));
       c.addEventListener('pointerleave', () => drawDoll(false));
       c.addEventListener('pointerup',    () => {
@@ -6619,6 +6670,9 @@ const Game = (function () {
   // Building definitions.
   // production:true  → use SCENE_ASSETS[idleKey] / [selKey]
   // production:false → use procedural Sketch icon (art placeholder)
+  // Church, Guild Hall, and Quest Board read as more "official/civic" buildings - grayscaling
+  // just these three icons sets them apart from the shops without touching their art files.
+  const GRAYSCALE_BUILDING_IDS = new Set(['church', 'guildhall', 'noticeboard']);
   const TOWN_BUILDINGS = {
     left: [
       { id: 'shop',        name: 'Shop',        production: true, idleKey: 'bldShoppeIdle',     selKey: 'bldShoppeSel',     blurb: 'Potions, rings, and amulets - buy or sell.' },
@@ -6642,10 +6696,12 @@ const Game = (function () {
 
   // Draws the player paper doll onto a canvas with equipment layers on top.
   // Equipment overlays are added here when art is ready — no other code needs changing.
-  function drawTownCharacter(canvas, player) {
+  function drawTownCharacter(canvas, player, grayscaleBg) {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // Character background — drawn first, "cover" fit (fills the canvas, no distortion)
+    // Character background — drawn first, "cover" fit (fills the canvas, no distortion).
+    // grayscaleBg (Equipment screen only, see G.renderEquipment) desaturates just this layer,
+    // reset before the doll itself is drawn on top so the character stays in color either way.
     const bgImg = _assetCache['charBg'];
     if (bgImg) {
       const bgScale = Math.max(canvas.width / bgImg.naturalWidth, canvas.height / bgImg.naturalHeight);
@@ -6653,9 +6709,11 @@ const Game = (function () {
       const bh = bgImg.naturalHeight * bgScale;
       const bx = (canvas.width  - bw) / 2;
       const by = (canvas.height - bh) / 2;
+      if (grayscaleBg) ctx.filter = 'grayscale(1)';
       ctx.drawImage(bgImg, bx, by, bw, bh);
+      if (grayscaleBg) ctx.filter = 'none';
     } else {
-      _loadAsset('charBg').then(() => drawTownCharacter(canvas, player));
+      _loadAsset('charBg').then(() => drawTownCharacter(canvas, player, grayscaleBg));
     }
     const dollKey = player.gender === 'male' ? 'dollMale' : 'dollFemale';
     const dollImg = _assetCache[dollKey];
@@ -6767,17 +6825,26 @@ const Game = (function () {
       c.className = 'town-bld-canvas';
       btn.appendChild(c);
 
+      let hovering = false;
       function draw(selected) {
         const ctx = c.getContext('2d');
         ctx.clearRect(0, 0, c.width, c.height);
-        const img = selected && selImg ? selImg : idleImg;
+        const isSelectedArt = selected && selImg;
+        const img = isSelectedArt ? selImg : idleImg;
+        // Only grayscale the idle art - hovering/pressing reveals the selected art in full
+        // color, so Church/Guild Hall/Quest Board "wake up" to color on interaction instead of
+        // staying grayscale the whole time.
+        const wantsGrayscale = GRAYSCALE_BUILDING_IDS.has(bld.id) && !isSelectedArt;
+        if (wantsGrayscale) ctx.filter = 'grayscale(1)';
         if (img) ctx.drawImage(img, 0, 0, c.width, c.height);
+        if (wantsGrayscale) ctx.filter = 'none';
       }
       draw(false);
 
+      btn.addEventListener('pointerenter', () => { hovering = true; draw(true); });
       btn.addEventListener('pointerdown',  () => { draw(true); writeOnNote(bld.name, bld.blurb || ''); });
-      btn.addEventListener('pointerup',    () => { draw(false); stopWritingOnNote(); handleBuildingTap(bld.id); });
-      btn.addEventListener('pointerleave', () => { draw(false); stopWritingOnNote(); });
+      btn.addEventListener('pointerup',    () => { draw(hovering); stopWritingOnNote(); handleBuildingTap(bld.id); });
+      btn.addEventListener('pointerleave', () => { hovering = false; draw(false); stopWritingOnNote(); });
       btn.style.cursor = 'pointer';
       return btn;
     }
@@ -6915,7 +6982,7 @@ const Game = (function () {
     // Draw character doll after layout, then align the building columns so the
     // left icon group's vertical center matches the equipment button's center.
     requestAnimationFrame(() => {
-      drawTownCharacter(dollCanvas, p);
+      drawTownCharacter(dollCanvas, p, true);
       const leftRect = leftCol.getBoundingClientRect();
       const dollRect = dollWrap.getBoundingClientRect();
       const delta = (dollRect.top + dollRect.height / 2) - (leftRect.top + leftRect.height / 2);
@@ -7163,6 +7230,20 @@ const Game = (function () {
     panel.appendChild(header);
     panel.appendChild(el('div', 'npc-dialogue', dialogueText));
 
+    // Per-NPC portrait sketch — sits in the corner the header's right:15% margin leaves free.
+    // Hidden via CSS until the shared panel frame art itself has loaded (see .npc-panel-art
+    // .npc-portrait below), so it never floats over the flat CSS-box fallback layout.
+    if (npc.portraitKey) {
+      const portraitImg = _assetCache[npc.portraitKey];
+      if (portraitImg) {
+        const portrait = el('div', 'npc-portrait');
+        portrait.style.backgroundImage = 'url(' + SCENE_ASSETS[npc.portraitKey] + ')';
+        panel.appendChild(portrait);
+      } else {
+        _loadAsset(npc.portraitKey).then((loaded) => { if (loaded) render(); });
+      }
+    }
+
     function showArt() {
       panel.style.backgroundImage = 'url(' + SCENE_ASSETS.panelNpcDialogue + ')';
       panel.classList.add('npc-panel-art');
@@ -7242,19 +7323,24 @@ const Game = (function () {
       const item = ITEMS[itemId];
       const row = G.el('div', 'item-row item-row-with-icon');
       const iconCanvas = document.createElement('canvas');
-      iconCanvas.width = 56; iconCanvas.height = 56;
+      iconCanvas.width = 72; iconCanvas.height = 72;
       iconCanvas.className = 'item-icon';
       row.appendChild(iconCanvas);
       const textCol = G.el('div', 'item-row-text');
-      textCol.appendChild(G.el('div', 'item-name', `${item.name} <span class="rarity">${item.rarity || ''}</span>`));
+      const nameEl = G.el('div', 'item-name', item.name);
+      if (item.rarity && RARITY_COLOR[item.rarity]) nameEl.style.color = RARITY_COLOR[item.rarity];
+      textCol.appendChild(nameEl);
       textCol.appendChild(G.el('div', 'item-desc', item.description));
       textCol.appendChild(G.el('div', 'item-stats', itemStatLine(item)));
-      textCol.appendChild(G.el('div', 'item-value', `${item.value} gold`));
+      // Gold cost moves into the Buy button itself below (keeps the row shorter) - Sell rows
+      // still show their own price line since there's no Sell-button restyle requested.
+      if (mode !== 'buy' && mode !== 'sell') textCol.appendChild(G.el('div', 'item-value', `${item.value} gold`));
       row.appendChild(textCol);
       requestAnimationFrame(() => Sketch.drawItemIconCard(iconCanvas, item));
       if (mode === 'buy') {
         const alreadyKnown = item.type === ITEM_TYPE.SPELLBOOK && G.state.player.knownSpells.includes(itemId);
-        const btn = G.el('button', 'btn btn-small', alreadyKnown ? 'Known' : 'Buy');
+        const btnLabel = alreadyKnown ? 'Known' : `Buy<span class="btn-sketch-cost">${item.value} gold</span>`;
+        const btn = G.el('button', 'btn btn-small btn-sketch', btnLabel);
         if (alreadyKnown) btn.classList.add('btn-disabled');
         btn.onclick = () => {
           if (alreadyKnown) { G.showToast('You already know this spell.'); return; }
@@ -7266,9 +7352,9 @@ const Game = (function () {
         };
         row.appendChild(btn);
       } else if (mode === 'sell') {
-        const btn = G.el('button', 'btn btn-small', 'Sell');
+        const sellPrice = Math.floor(item.value * 0.5);
+        const btn = G.el('button', 'btn btn-small btn-sketch', `Sell<span class="btn-sketch-cost">${sellPrice} gold</span>`);
         btn.onclick = () => {
-          const sellPrice = Math.floor(item.value * 0.5);
           if (!PM.removeFromStorage(G.state.player, itemId)) { G.showToast('You do not own this.'); return; }
           G.state.player.gold += sellPrice;
           G.showToast(`Sold ${item.name} for ${sellPrice} gold.`);
@@ -7344,13 +7430,12 @@ const Game = (function () {
       G.state.player.consumablesStorage.forEach(s => {
         const item = ITEMS[s.itemId];
         const row = G.el('div', 'item-row item-row-with-icon');
-        const iconCanvas = document.createElement('canvas'); iconCanvas.width = 56; iconCanvas.height = 56; iconCanvas.className = 'item-icon'; row.appendChild(iconCanvas);
+        const iconCanvas = document.createElement('canvas'); iconCanvas.width = 72; iconCanvas.height = 72; iconCanvas.className = 'item-icon'; row.appendChild(iconCanvas);
         requestAnimationFrame(() => Sketch.drawItemIconCard(iconCanvas, item));
         const textCol = G.el('div', 'item-row-text');
         textCol.appendChild(G.el('div', 'item-name', `${item.name} x${s.qty}`));
-        textCol.appendChild(G.el('div', 'item-value', `${Math.floor(item.value * 0.5)} gold each`));
         row.appendChild(textCol);
-        const btn = G.el('button', 'btn btn-small', 'Sell 1');
+        const btn = G.el('button', 'btn btn-small btn-sketch', `Sell 1<span class="btn-sketch-cost">${Math.floor(item.value * 0.5)} gold</span>`);
         btn.onclick = () => { PM.removeFromStorage(G.state.player, s.itemId); G.state.player.gold += Math.floor(item.value * 0.5); G.showToast(`Sold ${item.name}.`); G.render(); };
         row.appendChild(btn); sellList.appendChild(row);
       });
@@ -7516,6 +7601,7 @@ const Game = (function () {
     innkeeper: {
       name: 'Bertram Holt',
       title: 'Innkeeper',
+      portraitKey: 'npcPortraitInnkeeper',
       identity: 'A broad-shouldered man with flour on his apron and ink on his hands — he does the books himself.',
       dialogue(p) {
         const done = p.completedQuests.length;
@@ -7532,6 +7618,7 @@ const Game = (function () {
     blacksmith: {
       name: 'Aldra Ironmark',
       title: 'Master Smith',
+      portraitKey: 'npcPortraitBlacksmith',
       identity: 'Short, scarred, and impossibly strong. She has been hammering iron in this town for thirty years.',
       dialogue(p) {
         const done = p.completedQuests.length;
@@ -7547,6 +7634,7 @@ const Game = (function () {
     priest: {
       name: 'Sister Maeve',
       title: 'Keeper of the Church',
+      portraitKey: 'npcPortraitPriest',
       identity: 'Quiet and watchful. She has buried more knights than she can count, and remembers all of them.',
       dialogue(p) {
         const done = p.completedQuests.length;
@@ -7561,6 +7649,7 @@ const Game = (function () {
     librarian: {
       name: 'Oswin Vane',
       title: 'Head Librarian',
+      portraitKey: 'npcPortraitLibrarian',
       identity: 'Thin, ink-stained, and perpetually distracted. He forgets names but never forgets books.',
       dialogue(p) {
         const done = p.completedQuests.length;
@@ -7576,6 +7665,7 @@ const Game = (function () {
     merchant: {
       name: 'Pip Corder',
       title: 'General Merchant',
+      portraitKey: 'npcPortraitMerchant',
       identity: 'Cheerful, quick-talking, and extremely good at making change in his favor.',
       dialogue(p) {
         const done = p.completedQuests.length;
@@ -7589,6 +7679,7 @@ const Game = (function () {
     guildmaster: {
       name: 'Commander Ressa Vale',
       title: 'Guildmaster',
+      portraitKey: 'npcPortraitGuildmaster',
       identity: 'Retired knight, one eye, permanent expression of mild disappointment. Respects results above everything.',
       dialogue(p) {
         const done = p.completedQuests.length;
@@ -7604,6 +7695,7 @@ const Game = (function () {
     armorer: {
       name: 'Dorn Fennick',
       title: 'Armorer',
+      portraitKey: 'npcPortraitArmorer',
       identity: 'Meticulous and soft-spoken. He measures twice, fits three times, and has never once let a knight walk out unbalanced.',
       dialogue(p) {
         const done = p.completedQuests.length;
@@ -7691,7 +7783,7 @@ const Game = (function () {
       const q = G.QUESTS[qid];
       const done = p.completedQuests.includes(qid);
       const area = G.QUEST_AREAS[q.area];
-      const row = G.el('div', 'item-row');
+      const row = G.el('div', 'item-row item-row-quest');
 
       // Title line with completion badge
       const titleEl = G.el('div', 'item-name');
@@ -7971,7 +8063,7 @@ const Game = (function () {
       const count = p.storage.filter(i => i === itemId).length;
       const row = G.el('div', 'item-row item-row-with-icon');
       const iconCanvas = document.createElement('canvas');
-      iconCanvas.width = 56; iconCanvas.height = 56;
+      iconCanvas.width = 72; iconCanvas.height = 72;
       iconCanvas.className = 'item-icon';
       row.appendChild(iconCanvas);
       requestAnimationFrame(() => Sketch.drawItemIconCard(iconCanvas, item));
@@ -8004,7 +8096,7 @@ const Game = (function () {
         const item = ITEMS[itemId];
         const row = G.el('div', 'item-row item-row-with-icon');
         const iconCanvas = document.createElement('canvas');
-        iconCanvas.width = 48; iconCanvas.height = 48;
+        iconCanvas.width = 62; iconCanvas.height = 62;
         iconCanvas.className = 'item-icon';
         row.appendChild(iconCanvas);
         requestAnimationFrame(() => Sketch.drawItemIconCard(iconCanvas, item));
@@ -8018,7 +8110,7 @@ const Game = (function () {
     }
 
     root.appendChild(wrap);
-    requestAnimationFrame(() => G.drawTownCharacter(canvas, p));
+    requestAnimationFrame(() => G.drawTownCharacter(canvas, p, true));
   };
 
   function spellStatLine(spell) {
@@ -8112,7 +8204,7 @@ const Game = (function () {
       const item = ITEMS[s.itemId];
       const row = G.el('div', 'item-row item-row-with-icon');
       const iconCanvas = document.createElement('canvas');
-      iconCanvas.width = 48; iconCanvas.height = 48;
+      iconCanvas.width = 62; iconCanvas.height = 62;
       iconCanvas.className = 'item-icon';
       row.appendChild(iconCanvas);
       requestAnimationFrame(() => Sketch.drawItemIconCard(iconCanvas, item));
@@ -8356,7 +8448,7 @@ const Game = (function () {
       const count = lo.consumables.filter(c => c === itemId).length;
       const row = G.el('div', 'item-row item-row-with-icon');
       const iconCanvas = document.createElement('canvas');
-      iconCanvas.width = 44; iconCanvas.height = 44;
+      iconCanvas.width = 56; iconCanvas.height = 56;
       iconCanvas.className = 'item-icon';
       row.appendChild(iconCanvas);
       requestAnimationFrame(() => Sketch.drawItemIconCard(iconCanvas, item));
@@ -8438,15 +8530,14 @@ const Game = (function () {
       const price = Math.round(item.value * 1.15);
       const row = G.el('div', 'item-row item-row-with-icon');
       const iconCanvas = document.createElement('canvas');
-      iconCanvas.width = 48; iconCanvas.height = 48;
+      iconCanvas.width = 62; iconCanvas.height = 62;
       iconCanvas.className = 'item-icon';
       row.appendChild(iconCanvas);
       requestAnimationFrame(() => Sketch.drawItemIconCard(iconCanvas, item));
       const textCol = G.el('div', 'item-row-text');
       textCol.appendChild(G.el('div', 'item-name', item.name));
-      textCol.appendChild(G.el('div', 'item-value', `${price} gold`));
       row.appendChild(textCol);
-      const btn = G.el('button', 'btn btn-small', 'Buy');
+      const btn = G.el('button', 'btn btn-small btn-sketch', `Buy<span class="btn-sketch-cost">${price} gold</span>`);
       btn.onclick = () => {
         if (p.gold < price) { G.showToast('Not enough gold.'); return; }
         p.gold -= price;
