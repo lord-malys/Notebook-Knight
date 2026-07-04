@@ -6243,11 +6243,23 @@ const Game = (function () {
     // Paper doll selected/pressed states
     dollMaleSel:     'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/Base/chr_male_paperdoll_selected.png',
     dollFemaleSel:   'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/Base/chr_female_paperdoll_selected.png',
-    // Bare base layer - no sword, no tunic - meant to sit underneath future armor-layer art in
-    // drawTownCharacter(). Not wired into rendering yet (no armor art exists to layer on top),
-    // registered here so it's ready when that lands. Never intended to be shown on its own.
+    // Bare base layer - no sword, no tunic - sits underneath equipped-armor art in
+    // drawTownCharacter() whenever the player has a chest piece with art equipped (see
+    // EQUIP_ART below). Never intended to be shown on its own.
     dollMaleBare:    'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/Base/chr_male_paperdoll_notunic.png',
     dollFemaleBare:  'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/Base/chr_female_paperdoll_notunic.png',
+    // Equipped-weapon overlays — pixel-aligned to the same 1024x1536 canvas as the base doll
+    // sprites above, so they can be drawn with the exact same dx/dy/dw/dh transform with no
+    // extra offset math. This is literally the sword that used to be baked into the base art,
+    // extracted into its own layer once the sword was removed from the default model.
+    wpnRustySwordMale:   'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/Equipped/chr_male_paperdoll_wpn_rusty_sword.png',
+    wpnRustySwordFemale: 'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/Equipped/chr_female_paperdoll_wpn_rusty_sword.png',
+    // Equipped-chest-armor overlays - same alignment convention as the weapon overlays above.
+    // Art doesn't exist yet for these; filenames are the agreed convention so dropping in a
+    // matching PNG (same 1024x1536 canvas, transparent except the vest) is all that's needed -
+    // no code change required once the file lands at this path and is pushed to main.
+    chsQuiltedVestMale:   'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/Equipped/chr_male_paperdoll_chs_padded_vest.png',
+    chsQuiltedVestFemale: 'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/Equipped/chr_female_paperdoll_chs_padded_vest.png',
     // Decorative hamlet art — bottom-anchored backdrop on the town screen
     artHamlet:          'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Town/art_hamlet.png.png',
     // Town buildings — new icon assets (all fully production)
@@ -6701,6 +6713,19 @@ const Game = (function () {
     library: 'library', church: 'church', guildhall: 'guildhall', noticeboard: 'noticeboard',
   };
 
+  // Maps an equipped item id to its per-gender paperdoll overlay art key (see the matching
+  // SCENE_ASSETS entries above). Add an entry here whenever new equipment art lands, following
+  // the same filename convention (chr_<gender>_paperdoll_<itemId>.png in
+  // 01_Art/Approved/Characters/Equipped/) - no other code needs to change.
+  const EQUIP_ART = {
+    weapon: {
+      wpn_rusty_sword: { male: 'wpnRustySwordMale', female: 'wpnRustySwordFemale' },
+    },
+    chest: {
+      chs_padded_vest: { male: 'chsQuiltedVestMale', female: 'chsQuiltedVestFemale' },
+    },
+  };
+
   // Draws the player paper doll onto a canvas with equipment layers on top.
   // Equipment overlays are added here when art is ready — no other code needs changing.
   function drawTownCharacter(canvas, player, grayscaleBg) {
@@ -6722,8 +6747,19 @@ const Game = (function () {
     } else {
       _loadAsset('charBg').then(() => drawTownCharacter(canvas, player, grayscaleBg));
     }
-    const dollKey = player.gender === 'male' ? 'dollMale' : 'dollFemale';
+
+    const gender = player.gender;
+    // Only switch to the bare (no-tunic) base once the equipped chest item's art has actually
+    // loaded - otherwise keep showing the tunic default so the doll never shows the gaps the
+    // bare sprite has where its clothing used to be.
+    const chestId = player.equipment.chest;
+    const chestArtKey = chestId && EQUIP_ART.chest[chestId] && EQUIP_ART.chest[chestId][gender];
+    const chestArtReady = !!(chestArtKey && _assetCache[chestArtKey]);
+    const dollKey = chestArtReady
+      ? (gender === 'male' ? 'dollMaleBare' : 'dollFemaleBare')
+      : (gender === 'male' ? 'dollMale' : 'dollFemale');
     const dollImg = _assetCache[dollKey];
+
     if (dollImg) {
       // Draw doll centred on top of the background, preserving 2:3 portrait ratio
       const scale = Math.min(canvas.width / dollImg.naturalWidth, canvas.height / dollImg.naturalHeight);
@@ -6732,12 +6768,28 @@ const Game = (function () {
       const dx = (canvas.width  - dw) / 2;
       const dy = (canvas.height - dh) / 2;
       ctx.drawImage(dollImg, dx, dy, dw, dh);
-      // Future equipment layers go here — just ctx.drawImage(equipImg, dx, dy, dw, dh)
+
+      // Chest armor layer - equip art shares the base doll's exact canvas alignment, so it
+      // always draws with the same dx/dy/dw/dh, no per-item offset needed.
+      if (chestArtReady) {
+        ctx.drawImage(_assetCache[chestArtKey], dx, dy, dw, dh);
+      } else if (chestArtKey) {
+        _loadAsset(chestArtKey).then((loaded) => { if (loaded) drawTownCharacter(canvas, player, grayscaleBg); });
+      }
+
+      // Weapon layer
+      const weaponId = player.equipment.weapon;
+      const weaponArtKey = weaponId && EQUIP_ART.weapon[weaponId] && EQUIP_ART.weapon[weaponId][gender];
+      if (weaponArtKey && _assetCache[weaponArtKey]) {
+        ctx.drawImage(_assetCache[weaponArtKey], dx, dy, dw, dh);
+      } else if (weaponArtKey) {
+        _loadAsset(weaponArtKey).then((loaded) => { if (loaded) drawTownCharacter(canvas, player, grayscaleBg); });
+      }
     } else {
       // Procedural fallback; also trigger a load+redraw
       const equipped = resolveEquipped(player);
       Sketch.drawCharacter(ctx, canvas.width / 2, canvas.height - 20, 1.2, player.gender, equipped);
-      _loadAsset(dollKey).then(() => drawTownCharacter(canvas, player));
+      _loadAsset(dollKey).then(() => drawTownCharacter(canvas, player, grayscaleBg));
     }
   }
 
