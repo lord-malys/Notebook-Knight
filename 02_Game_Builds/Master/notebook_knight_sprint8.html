@@ -6272,7 +6272,10 @@ const Game = (function () {
     // only the head, chest covering, and boots are swappable layers. Every layer here is
     // pixel-aligned to the same 1024x1536 canvas as the old dolls, so they all still draw
     // with the same dx/dy/dw/dh transform as before, no extra offset math.
-    charFrameV2:          'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/BaseV2/chr_frame_v2.png',
+    // Points at chr_frame_v2b.png (the revised base with a built-in short-sleeve undershirt) -
+    // the original chr_frame_v2.png (bare arms/shins, no shirt) is left in place, unused, in
+    // case this revision needs to be rolled back.
+    charFrameV2:          'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/BaseV2/chr_frame_v2b.png',
     charHeadMaleV2:       'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/BaseV2/chr_head_male_v2.png',
     charHeadFemaleV2:     'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/BaseV2/chr_head_female_v2.png',
     // Default chest covering, shown whenever no chest item (or no chest item with V2 art yet)
@@ -6287,7 +6290,10 @@ const Game = (function () {
     // position is identical regardless of which head is on top - verified by compositing both
     // heads over the same overlay before wiring this in).
     wpnRustySwordV2:      'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_wpn_rusty_sword_v2.png',
-    chsQuiltedVestV2:     'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_padded_vest_v2.png',
+    // Points at chr_chs_padded_vest_v2b.png (revised to fit over the new frame's built-in
+    // sleeves) - the original chr_chs_padded_vest_v2.png is left in place, unused, in case
+    // this revision needs to be rolled back.
+    chsQuiltedVestV2:     'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_padded_vest_v2b.png',
 
     // Decorative hamlet art — bottom-anchored backdrop on the town screen
     artHamlet:          'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Town/art_hamlet.png.png',
