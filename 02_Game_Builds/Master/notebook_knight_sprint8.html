@@ -767,16 +767,18 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
   width: 230px;
 }
 /* Bottom-left utility stack - persistent on every game screen (mirrors .nb-back-btn's corner
-   anchor math, bottom+left instead of top+right). Left offset clears the 12%-wide stat margin
-   column instead of sitting flush against the artboard edge, since that column runs the full
-   height of the screen. Top-to-bottom DOM order = Save Game, Mute, Exit Game, which reads
-   bottom-to-top as Exit (bottom), Mute (middle), Save (top) - matches the requested order. */
+   anchor math, bottom+left instead of top+right). Left edge + width now match .nb-margin-canvas
+   exactly (flush with the artboard's left edge, 12%-of-artboard-width wide) so the stack sits
+   inside the same left-margin column as the stats, to the left of the ruled red margin line,
+   instead of floating in the content area. Top-to-bottom DOM order = Save Game, Mute, Exit Game,
+   which reads bottom-to-top as Exit (bottom), Mute (middle), Save (top) - matches the requested
+   order. */
 .nb-utility-stack {
   position: fixed;
   bottom: calc(50% - min(100vh, calc(100vw * 16 / 9)) / 2 + 8px);
-  left: calc(50% - min(100vw, calc(100vh * 9 / 16)) / 2 + 15%);
+  left: calc(50% - min(100vw, calc(100vh * 9 / 16)) / 2);
+  width: calc(min(100vw, calc(100vh * 9 / 16)) * 0.12);
   z-index: 10;
-  width: 160px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -784,22 +786,17 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
 }
 /* Shared "blank chrome + code-drawn label" style for Save Game and Exit Game so they read as
    the same button family, stacked at a consistent width. */
-.nb-stack-text-btn { width: 100%; }
-.nb-stack-text-btn-canvas {
-  display: block;
-  width: 100%;
-  aspect-ratio: 386 / 100;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-  cursor: pointer;
-}
 /* Mute is the odd one out - its icon is baked into square art, not a wide label chrome - so it's
-   sized down and centered rather than stretched to the stack's full width. */
-.nb-mute-btn { width: 70px; }
+   sized down and centered rather than stretched to the stack's full width. Width now follows the
+   stack's own (margin-matched) width instead of a fixed 70px, capped so it never grows past the
+   old placeholder size on wide windows. Grayscale is applied here so all three stacked buttons
+   (Save/Mute/Exit share this canvas class) read as muted ink sketches instead of full color. */
+.nb-mute-btn { width: 100%; max-width: 70px; }
 .nb-mute-btn-canvas {
   display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  filter: grayscale(1) drop-shadow(0 2px 4px rgba(0,0,0,0.3));
   cursor: pointer;
 }
 /* Title screen's menu-artboard is position:relative (centered by its parent flexbox, not the
@@ -6118,6 +6115,12 @@ const Game = (function () {
     btnBackDown:       'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/Banners/ui_btn_back_pressed.png.png',
     // Reusable NPC name/dialogue panel — one blank frame behind every NPC across every location.
     panelNpcDialogue:  'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/Banners/ui_panel_npc_dialogue_clean.png',
+    // Save Game and Exit Game, now square icon buttons matching Mute's style (replaces the wide
+    // text-button versions above, which stay defined in case they're useful elsewhere later).
+    btnBookmarkUp:     'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_btn_bookmark_idle.png.png',
+    btnBookmarkDown:   'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_btn_bookmark_pressed.png',
+    btnCloseUp:        'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_btn_close_idle.png',
+    btnCloseDown:      'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_btn_close_pressed.png.png',
     // Save Game button — same blank-chrome-plus-code-drawn-label trick as Back to Town.
     btnSaveUp:         'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_btn_save_idle.png.png',
     btnSaveDown:       'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_btn_save_pressed.png.png',
@@ -6410,27 +6413,23 @@ const Game = (function () {
 
   // Illustrated Save Game button - same blank-chrome + code-rendered-label trick, with a
   // bookmark-ribbon icon baked into the art instead of an arrow.
+  // Icon-only Save Game button - matches Mute's square style/sizing (.nb-mute-btn /
+  // .nb-mute-btn-canvas cover the shared square-icon-stack look, so it's reused here rather than
+  // duplicated). No code-drawn label - the bookmark icon is baked into the art.
   function makeSaveButton(onClick) {
-    const wrapper = el('div', 'nb-stack-text-btn');
-    const imgUp = _assetCache['btnSaveUp'];
-    if (!imgUp) { _loadAsset('btnSaveUp').then(() => render()); }
+    const wrapper = el('div', 'nb-mute-btn');
+    const imgUp = _assetCache['btnBookmarkUp'];
+    if (!imgUp) { _loadAsset('btnBookmarkUp').then(() => render()); }
     if (imgUp) {
       const c = document.createElement('canvas');
-      c.className = 'nb-stack-text-btn-canvas';
-      c.width = 386; c.height = 100;
-      const imgDown = _assetCache['btnSaveDown'];
+      c.className = 'nb-mute-btn-canvas';
+      c.width = 400; c.height = 400;
+      const imgDown = _assetCache['btnBookmarkDown'];
       function draw(pressed) {
         const ctx = c.getContext('2d');
         ctx.clearRect(0, 0, c.width, c.height);
         const img = (pressed && imgDown) ? imgDown : imgUp;
         ctx.drawImage(img, 0, 0, c.width, c.height);
-        const fs = Math.round(c.height * 0.32);
-        ctx.font = '700 ' + fs + 'px "Patrick Hand", "Architects Daughter", cursive';
-        ctx.fillStyle = '#2a1f0e';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        // Centered right of the bookmark icon - the left ~20% is the ribbon doodle.
-        ctx.fillText('Save Game', c.width * 0.58, c.height / 2 + 2);
       }
       draw(false);
       c.style.cursor = 'pointer';
@@ -6439,36 +6438,30 @@ const Game = (function () {
       c.addEventListener('pointerleave', () => draw(false));
       wrapper.appendChild(c);
     } else {
-      const btn = el('button', 'btn btn-secondary', 'Save Game');
+      const btn = el('button', 'btn btn-small', 'Save');
       btn.onclick = onClick;
       wrapper.appendChild(btn);
     }
     return wrapper;
   }
 
-  // Exit Game for the in-game utility stack - reuses the existing small-button chrome (no new
-  // art needed) so it matches Save Game's width/style. No-op for now, same as the title screen's
-  // Exit Game button: looks and presses correctly, doesn't do anything yet.
+  // Icon-only Exit Game button - same square style as Save/Mute, X icon baked into the art.
+  // No-op for now, same as the title screen's Exit Game button: looks and presses correctly,
+  // doesn't do anything yet.
   function makeExitButton() {
-    const wrapper = el('div', 'nb-stack-text-btn');
-    const imgUp = _assetCache['btnSmallUp'];
-    if (!imgUp) { _loadAsset('btnSmallUp').then(() => render()); }
+    const wrapper = el('div', 'nb-mute-btn');
+    const imgUp = _assetCache['btnCloseUp'];
+    if (!imgUp) { _loadAsset('btnCloseUp').then(() => render()); }
     if (imgUp) {
       const c = document.createElement('canvas');
-      c.className = 'nb-stack-text-btn-canvas';
-      c.width = 300; c.height = 100;
-      const imgDown = _assetCache['btnSmallDown'];
+      c.className = 'nb-mute-btn-canvas';
+      c.width = 400; c.height = 400;
+      const imgDown = _assetCache['btnCloseDown'];
       function draw(pressed) {
         const ctx = c.getContext('2d');
         ctx.clearRect(0, 0, c.width, c.height);
         const img = (pressed && imgDown) ? imgDown : imgUp;
         ctx.drawImage(img, 0, 0, c.width, c.height);
-        const fs = Math.round(c.height * 0.34);
-        ctx.font = '700 ' + fs + 'px "Patrick Hand", "Architects Daughter", cursive';
-        ctx.fillStyle = '#2a1f0e';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('Exit Game', c.width / 2, c.height / 2 + 2);
       }
       draw(false);
       c.style.cursor = 'pointer';
@@ -6477,7 +6470,7 @@ const Game = (function () {
       c.addEventListener('pointerleave', () => draw(false));
       wrapper.appendChild(c);
     } else {
-      wrapper.appendChild(el('button', 'btn btn-small', 'Exit Game'));
+      wrapper.appendChild(el('button', 'btn btn-small', 'Exit'));
     }
     return wrapper;
   }
