@@ -268,8 +268,18 @@ h1, h2, h3 { font-family: 'Architects Daughter', cursive; margin: 6px 0; }
 .slot-label { font-weight: bold; min-width: 90px; }
 .slot-value { flex: 1; }
 
-.loadout-summary { border: 2px solid #777; border-radius: 8px; padding: 8px 10px; background: #fffef9; }
-.loadout-line { font-size: 0.92em; }
+/* Same 9-slice pencil-sketch box art as .item-row (see there for why border-image over a
+   stretched background), so the Prepare-for-Quest gear summary reads as the same hand-drawn
+   paper element as every item row instead of a plain rounded web box. */
+.loadout-summary {
+  border-style: solid;
+  border-width: 26px;
+  border-image-source: url('https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/ui_box_item_row.png');
+  border-image-slice: 110 fill;
+  border-image-repeat: stretch;
+  padding: 4px 10px 8px;
+  background: none;
+}
 .warn-box { background: #fff3cd; border: 1.5px solid #c9a227; border-radius: 8px; padding: 8px; }
 
 .objective { background: #e9f5e9; border: 1.5px solid #4a8a4a; border-radius: 8px; padding: 6px 10px; }
@@ -8413,27 +8423,74 @@ const Game = (function () {
     function refreshSummary() {
       summary.innerHTML = '';
       const lo = p.questLoadout;
-      const lines = [
-        ['Weapon', lo.weapon ? ITEMS[lo.weapon].name : '(none)'],
-        ['Off Hand', lo.offhand ? ITEMS[lo.offhand].name : '(none)'],
-        ['Helmet', lo.helmet ? ITEMS[lo.helmet].name : '(none)'],
-        ['Chest', lo.chest ? ITEMS[lo.chest].name : '(none)'],
-        ['Boots', lo.boots ? ITEMS[lo.boots].name : '(none)'],
-        ['Back', lo.back ? ITEMS[lo.back].name : '(none)'],
-        ['Rings', lo.rings.map(r => ITEMS[r].name).join(', ') || '(none)'],
-        ['Amulet', lo.amulet ? ITEMS[lo.amulet].name : '(none)'],
-        ['Consumables', lo.consumables.map(c => ITEMS[c].name).join(', ') || '(none)']
-      ];
-      lines.forEach(([k, v]) => summary.appendChild(G.el('div', 'loadout-line', `<b>${k}:</b> ${v}`)));
+
+      // Same equip-layout/equip-preview/equip-slots structure (and the same drawTownCharacterV2
+      // call) as the Equipment screen, so the doll and gear rows here are sized and positioned
+      // identically - just sitting inside the pencil-sketch box border instead of bare on the page.
+      const layout = G.el('div', 'equip-layout');
+      const previewBox = G.el('div', 'equip-preview');
+      const dollCanvas = document.createElement('canvas');
+      dollCanvas.width = 250; dollCanvas.height = 400;
+      dollCanvas.className = 'town-doll-canvas';
+      previewBox.appendChild(dollCanvas);
+      layout.appendChild(previewBox);
+      requestAnimationFrame(() => G.drawTownCharacterV2(dollCanvas, p, true));
+
+      const slotsBox = G.el('div', 'equip-slots');
+      function addSlotRow(label, value, extraClass) {
+        const row = G.el('div', 'slot-row' + (extraClass ? ' ' + extraClass : ''));
+        row.appendChild(G.el('div', 'slot-label', label));
+        row.appendChild(G.el('div', 'slot-value', value));
+        slotsBox.appendChild(row);
+      }
+      addSlotRow('Weapon', lo.weapon ? ITEMS[lo.weapon].name : '(none)');
+      addSlotRow('Off Hand', lo.offhand ? ITEMS[lo.offhand].name : '(none)');
+      addSlotRow('Helmet', lo.helmet ? ITEMS[lo.helmet].name : '(none)');
+      addSlotRow('Chest', lo.chest ? ITEMS[lo.chest].name : '(none)');
+      addSlotRow('Boots', lo.boots ? ITEMS[lo.boots].name : '(none)');
+      addSlotRow('Back', lo.back ? ITEMS[lo.back].name : '(none)');
+      addSlotRow('Rings', lo.rings.map(r => ITEMS[r].name).join(', ') || '(none)');
+      addSlotRow('Amulet', lo.amulet ? ITEMS[lo.amulet].name : '(none)');
+      addSlotRow('Consumables', lo.consumables.map(c => ITEMS[c].name).join(', ') || '(none)');
       if (p.knownSpells && p.knownSpells.length) {
-        summary.appendChild(G.el('div', 'loadout-line', `<b>Known Spells:</b> ${p.knownSpells.map(s => ITEMS[s].name.replace('Spellbook: ', '')).join(', ')}`));
+        addSlotRow('Known Spells', p.knownSpells.map(s => ITEMS[s].name.replace('Spellbook: ', '')).join(', '));
       }
       if (p.activeBuff) {
-        summary.appendChild(G.el('div', 'loadout-line buff-line', `<b>Blessing:</b> ${p.activeBuff.name}`));
+        addSlotRow('Blessing', p.activeBuff.name, 'buff-line');
       }
+      layout.appendChild(slotsBox);
+
+      summary.appendChild(layout);
     }
     refreshSummary();
     _nbc.appendChild(summary);
+
+    // Action buttons live right under the gear panel and above the consumables picker - same
+    // pencil-sketch button chrome as Buy/Sell/Equip/Unequip/Add/Remove.
+    const btnRow = G.el('div', 'btn-row');
+    const editEquip = G.el('button', 'btn btn-small btn-sketch', 'Edit Gear');
+    editEquip.onclick = () => { p.questLoadout._initialized = false; G.goTo('equipment'); };
+    const confirmBtn = G.el('button', 'btn btn-small btn-sketch', 'Depart');
+    confirmBtn.onclick = () => {
+      if (!p.questLoadout.weapon) { G.showToast('You should bring a weapon!'); }
+      enterQuestArea(quest);
+    };
+    const cancelBtn = G.el('button', 'btn btn-small btn-sketch', 'Abandon');
+    cancelBtn.onclick = () => {
+      G.showConfirm(
+        `Abandon "${quest.name}"? Your quest progress will be lost.`,
+        () => {
+          p.activeQuest = null; p.questLoadout._initialized = false; p.activeBuff = null;
+          G.showToast('Quest abandoned.');
+          G.goTo('town');
+        },
+        { confirmLabel: 'Abandon' }
+      );
+    };
+    btnRow.appendChild(editEquip);
+    btnRow.appendChild(confirmBtn);
+    btnRow.appendChild(cancelBtn);
+    _nbc.appendChild(btnRow);
 
     // Dark area light source check — shown after loadout is initialized so it reflects current state
     const questArea = G.QUEST_AREAS[quest.area];
@@ -8465,7 +8522,7 @@ const Game = (function () {
       const inLoadout = p.questLoadout.consumables.filter(c => c === s.itemId).length;
       textCol.appendChild(G.el('div', 'item-name', `${item.name} (own ${s.qty}, loadout ${inLoadout})`));
       row.appendChild(textCol);
-      const addBtn = G.el('button', 'btn btn-small', 'Add');
+      const addBtn = G.el('button', 'btn btn-small btn-sketch', 'Add');
       addBtn.onclick = () => {
         if (p.questLoadout.consumables.length >= LOADOUT_LIMITS.consumable) { G.showToast('Consumable slots full (max 3).'); return; }
         const ownedCount = p.consumablesStorage.find(x => x.itemId === s.itemId)?.qty || 0;
@@ -8474,7 +8531,7 @@ const Game = (function () {
         p.questLoadout.consumables.push(s.itemId);
         refreshSummary(); G.render();
       };
-      const remBtn = G.el('button', 'btn btn-small', 'Remove');
+      const remBtn = G.el('button', 'btn btn-small btn-sketch', 'Remove');
       remBtn.onclick = () => {
         const idx = p.questLoadout.consumables.indexOf(s.itemId);
         if (idx >= 0) p.questLoadout.consumables.splice(idx, 1);
@@ -8485,21 +8542,6 @@ const Game = (function () {
     });
     if (p.consumablesStorage.length === 0) consList.appendChild(G.el('div', 'empty-note', 'No consumables owned.'));
     _nbc.appendChild(consList);
-
-    const btnRow = G.el('div', 'btn-row');
-    const editEquip = G.el('button', 'btn btn-secondary', 'Edit Equipped Gear First');
-    editEquip.onclick = () => { p.questLoadout._initialized = false; G.goTo('equipment'); };
-    const confirmBtn = G.el('button', 'btn btn-primary', 'Depart for Quest');
-    confirmBtn.onclick = () => {
-      if (!p.questLoadout.weapon) { G.showToast('You should bring a weapon!'); }
-      enterQuestArea(quest);
-    };
-    const cancelBtn = G.el('button', 'btn btn-small', 'Abandon Quest');
-    cancelBtn.onclick = () => { p.activeQuest = null; p.questLoadout._initialized = false; p.activeBuff = null; G.goTo('town'); };
-    btnRow.appendChild(editEquip);
-    btnRow.appendChild(confirmBtn);
-    btnRow.appendChild(cancelBtn);
-    _nbc.appendChild(btnRow);
 
     root.appendChild(wrap);
   };
