@@ -37,8 +37,25 @@ body {
   padding: 0;
   position: relative;
   background: transparent;
+  /* Needed for .page-flip-in's rotateY to read as real depth instead of a flat squash - has to
+     live on a game-artboard ancestor, not the artboard itself. */
+  perspective: 1600px;
 }
 .screen { display: flex; flex-direction: column; gap: 10px; }
+
+/* Page-turn transition between game screens (see goTo()/render()) - plays once on the freshly
+   built .game-artboard when navigating to a new screen, not on in-place re-renders of the same
+   screen (button clicks, stat updates, etc. call render() directly without this class). Keeps
+   .game-artboard's own translate(-50%,-50%) centering in every keyframe so it doesn't jump. */
+@keyframes page-flip-in {
+  0%   { transform: translate(-50%, -50%) rotateY(-16deg) scale(0.95); opacity: 0.4; }
+  100% { transform: translate(-50%, -50%) rotateY(0deg) scale(1); opacity: 1; }
+}
+.page-flip-in {
+  transform-origin: left center;
+  animation: page-flip-in 0.32s ease-out;
+  backface-visibility: hidden;
+}
 
 /* Combat is the one screen with no renderHeader()/.nb-page-wrapper - it never got pinned to the
    9:16 artboard's exact bounds the way every other screen is, so at some viewport sizes it just
@@ -3468,7 +3485,7 @@ else window.QuestsData = { QUEST_AREAS, QUESTS, LOADOUT_LIMITS };
 const BOARD_QUEST_IDS = {
   questboard: ['q_meadow_clear', 'q_goblin_ears', 'q_rescue_merchant', 'q_crystal_caves', 'q_watchtower', 'q_ogre_hill', 'q_sunken_depths', 'q_iron_bastion_siege'],
   bounty: ['q_mine_key', 'q_bandit_bounty', 'q_forest_predator', 'q_mountain_pass', 'q_spider_nest', 'q_whispering_barrow', 'q_captain_morrow', 'q_obsidian_wastes'],
-  guildhall: ['q_sewer_cleanup', 'q_haunted_crypt', 'q_swamp_troll', 'q_fire_hunt', 'q_dragon_shrine', 'q_dragon_scale_bounty', 'q_blighted_marches', 'q_warlord_kressek', 'q_bleeding_chasm', 'q_cinderlord_vraug', 'q_hollow_throne'],
+  guildhall: ['q_sewer_cleanup', 'q_haunted_crypt', 'q_snow_pass', 'q_swamp_troll', 'q_fire_hunt', 'q_dragon_shrine', 'q_dragon_scale_bounty', 'q_blighted_marches', 'q_warlord_kressek', 'q_bleeding_chasm', 'q_cinderlord_vraug', 'q_hollow_throne'],
   church: ['q_graveyard_spirits', 'q_cursed_village', 'q_drowned_cardinal', 'q_frozen_cathedral', 'q_hollow_choir'],
   library: ['q_tower', 'q_ruins_exploration', 'q_relic_hunt', 'q_sky_fortress', 'q_clockwork_vault', 'q_starfall_crater', 'q_godsgrave']
 };
@@ -6186,9 +6203,11 @@ const Game = (function () {
     return wrapper;
   }
 
+  let _pendingPageFlip = false;
   function goTo(screen) {
     playScreenTransitionSfx();
     state.screen = screen;
+    _pendingPageFlip = true;
     render();
   }
 
@@ -6207,7 +6226,11 @@ const Game = (function () {
       'defeat','victory'];
     let screenRoot = root;
     if (gameScreens.includes(state.screen)) {
-      const artboard = el('div', 'game-artboard');
+      // The flip-in class only gets added when this render was triggered by actual navigation
+      // (goTo() set the flag just above) - flip it back off immediately so the next plain
+      // render() call (e.g. a button handler refreshing the same screen) stays instant.
+      const artboard = el('div', 'game-artboard' + (_pendingPageFlip ? ' page-flip-in' : ''));
+      _pendingPageFlip = false;
       root.appendChild(artboard);
       screenRoot = artboard;
     }
