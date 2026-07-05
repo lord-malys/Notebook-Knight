@@ -37,19 +37,21 @@ body {
   padding: 0;
   position: relative;
   background: transparent;
-  /* Needed for .page-flip-in's rotateY to read as real depth instead of a flat squash - has to
-     live on a game-artboard ancestor, not the artboard itself. */
-  perspective: 1600px;
 }
 .screen { display: flex; flex-direction: column; gap: 10px; }
 
 /* Page-turn transition between game screens (see goTo()/render()) - plays once on the freshly
    built .game-artboard when navigating to a new screen, not on in-place re-renders of the same
    screen (button clicks, stat updates, etc. call render() directly without this class). Keeps
-   .game-artboard's own translate(-50%,-50%) centering in every keyframe so it doesn't jump. */
+   .game-artboard's own translate(-50%,-50%) centering in every keyframe so it doesn't jump.
+   The perspective() function lives INLINE in the transform here (not as a separate `perspective`
+   property on an ancestor like #app) - putting perspective on #app made #app the containing block
+   for any position:fixed descendant (both .menu-screen AND .game-artboard use position:fixed),
+   which broke their fixed-to-viewport centering. Keeping it self-contained on this one rule avoids
+   touching #app's containing-block behavior at all. */
 @keyframes page-flip-in {
-  0%   { transform: translate(-50%, -50%) rotateY(-16deg) scale(0.95); opacity: 0.4; }
-  100% { transform: translate(-50%, -50%) rotateY(0deg) scale(1); opacity: 1; }
+  0%   { transform: translate(-50%, -50%) perspective(1600px) rotateY(-16deg) scale(0.95); opacity: 0.4; }
+  100% { transform: translate(-50%, -50%) perspective(1600px) rotateY(0deg) scale(1); opacity: 1; }
 }
 .page-flip-in {
   transform-origin: left center;
