@@ -6366,6 +6366,44 @@ const Game = (function () {
     bannerChurch:      'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/Banners/ui_banner_church.png',
     bannerGuildhall:   'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/Banners/ui_banner_guild_hall.png',
     bannerQuestBoard:  'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/Banners/ui_banner_quest_board.png',
+    // Quest-area banners (34 areas) - same hand-drawn-on-ruled-paper treatment as the town
+    // location banners above, shown at the top of the Exploring screen. TEST BUILD: local
+    // relative paths (not yet pushed to GitHub) - swap to raw.githubusercontent.com URLs
+    // (same pattern as bannerShop etc. above) once approved and pushed to main.
+    bannerMeadowPath: '../../01_Art/Approved/Locations/banner_meadow_path.png',
+    bannerGoblinWoods: '../../01_Art/Approved/Locations/banner_goblin_woods.png',
+    bannerOldMine: '../../01_Art/Approved/Locations/banner_old_mine.png',
+    bannerSewers: '../../01_Art/Approved/Locations/banner_sewers.png',
+    bannerGraveyard: '../../01_Art/Approved/Locations/banner_graveyard.png',
+    bannerBanditCamp: '../../01_Art/Approved/Locations/banner_bandit_camp.png',
+    bannerOgreHill: '../../01_Art/Approved/Locations/ogre_hill.png',
+    bannerHauntedCrypt: '../../01_Art/Approved/Locations/haunted_crypt.png',
+    bannerMountains: '../../01_Art/Approved/Locations/mountains.png',
+    bannerSnowPass: '../../01_Art/Approved/Locations/snow_pass.png.png',
+    bannerAbandonedTower: '../../01_Art/Approved/Locations/location_abandoned_tower.png.png',
+    bannerSwamp: '../../01_Art/Approved/Locations/location_swamp.png.png',
+    bannerRuins: '../../01_Art/Approved/Locations/ruins.png',
+    bannerDragonShrine: '../../01_Art/Approved/Locations/dragon_shrine.png.png',
+    bannerCursedVillage: '../../01_Art/Approved/Locations/cursed_village.png',
+    bannerLavaCaves: '../../01_Art/Approved/Locations/lava_caves.png.png',
+    bannerWatchtower: '../../01_Art/Approved/Locations/banner_old_watchtower.png',
+    bannerDeepForest: '../../01_Art/Approved/Locations/deep_forest.png',
+    bannerCrystalCaves: '../../01_Art/Approved/Locations/banner_crystal_caves.png',
+    bannerSpiderNest: '../../01_Art/Approved/Locations/location_spider_nest.png.png',
+    bannerVolcanoSlopes: '../../01_Art/Approved/Locations/volcano_slopes.png.png',
+    bannerSunkenTemple: '../../01_Art/Approved/Locations/sunken_temple.png.png',
+    bannerWhisperingBarrow: '../../01_Art/Approved/Locations/whispering_barrow.png.png',
+    bannerBlightedMarches: '../../01_Art/Approved/Locations/blighted_marches.png.png',
+    bannerIronBastion: '../../01_Art/Approved/Locations/iron_bastion.png.png',
+    bannerShatteredCoast: '../../01_Art/Approved/Locations/shattered_coast.png.png',
+    bannerFrozenCathedral: '../../01_Art/Approved/Locations/frozen_cathedral.png.png',
+    bannerSkyFortress: '../../01_Art/Approved/Locations/sky_fortress.png.png',
+    bannerBleedingChasm: '../../01_Art/Approved/Locations/bleeding_chasm.png.png',
+    bannerObsidianWastes: '../../01_Art/Approved/Locations/obsidian_wastes.png.png',
+    bannerClockworkVault: '../../01_Art/Approved/Locations/clockwork_vault.png.png',
+    bannerStarfallCrater: '../../01_Art/Approved/Locations/starfall_crater.png.png',
+    bannerHollowThrone: '../../01_Art/Approved/Locations/Hollow_Throne.png.png',
+    bannerGodsgrave: '../../01_Art/Approved/Locations/godsgrave.png.png',
     // Back to Town button — illustrated chrome (blank arrow tab, no baked-in label; the code
     // draws "Back to Town" on top, same trick as btnLargeUp/btnSmallUp above).
     btnBackUp:         'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/UI/Banners/ui_btn_back_idle.png.png',
@@ -7422,6 +7460,41 @@ const Game = (function () {
     shop: 'bannerShop', blacksmith: 'bannerBlacksmith', armorshop: 'bannerArmorshop',
     inn: 'bannerInn', library: 'bannerLibrary', church: 'bannerChurch',
     guildhall: 'bannerGuildhall', noticeboard: 'bannerQuestBoard',
+    // Quest areas (34) - see SCENE_ASSETS for the matching art paths.
+    meadow_path: 'bannerMeadowPath',
+    goblin_woods: 'bannerGoblinWoods',
+    old_mine: 'bannerOldMine',
+    sewers: 'bannerSewers',
+    graveyard: 'bannerGraveyard',
+    bandit_camp: 'bannerBanditCamp',
+    ogre_hill: 'bannerOgreHill',
+    haunted_crypt: 'bannerHauntedCrypt',
+    mountains: 'bannerMountains',
+    snow_pass: 'bannerSnowPass',
+    abandoned_tower: 'bannerAbandonedTower',
+    swamp: 'bannerSwamp',
+    ruins: 'bannerRuins',
+    dragon_shrine: 'bannerDragonShrine',
+    cursed_village: 'bannerCursedVillage',
+    lava_caves: 'bannerLavaCaves',
+    watchtower: 'bannerWatchtower',
+    deep_forest: 'bannerDeepForest',
+    crystal_caves: 'bannerCrystalCaves',
+    spider_nest: 'bannerSpiderNest',
+    volcano_slopes: 'bannerVolcanoSlopes',
+    sunken_temple: 'bannerSunkenTemple',
+    whispering_barrow: 'bannerWhisperingBarrow',
+    blighted_marches: 'bannerBlightedMarches',
+    iron_bastion: 'bannerIronBastion',
+    shattered_coast: 'bannerShatteredCoast',
+    frozen_cathedral: 'bannerFrozenCathedral',
+    sky_fortress: 'bannerSkyFortress',
+    bleeding_chasm: 'bannerBleedingChasm',
+    obsidian_wastes: 'bannerObsidianWastes',
+    clockwork_vault: 'bannerClockworkVault',
+    starfall_crater: 'bannerStarfallCrater',
+    hollow_throne: 'bannerHollowThrone',
+    godsgrave: 'bannerGodsgrave',
   };
 
   // Draws the banner shown at the top of a location screen (shop interior, blacksmith forge,
@@ -8634,11 +8707,14 @@ const Game = (function () {
   // ---------- EXPLORATION ----------
   G.renderExploration = function (root) {
     const wrap = G.el('div', 'screen exploration-screen');
-    const _nbh = G.renderHeader(false); wrap.appendChild(_nbh); const _nbc = _nbh.nbContent || wrap;
     const p = G.state.player;
     const area = QUEST_AREAS[G.state.currentArea];
     const quest = QUESTS[p.activeQuest];
-    _nbc.appendChild(G.el('h2', null, area.name));
+    // Location name goes in the persistent header name slot (same as every town location screen)
+    // instead of an in-content h2, and the hand-drawn area banner + flavor line sit right under
+    // it, before anything else - matching the Shop/Blacksmith/etc. layout order.
+    const _nbh = G.renderHeader(area.name); wrap.appendChild(_nbh); const _nbc = _nbh.nbContent || wrap;
+    _nbc.appendChild(G.renderLocationBanner(area.id, area.name));
     if (area.flavorLine) _nbc.appendChild(G.el('p', 'flavor', area.flavorLine));
     // Show darkness status during exploration too, so the player always knows their light state
     if (area.isDark) {
