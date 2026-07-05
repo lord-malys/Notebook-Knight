@@ -3600,11 +3600,7 @@ if (typeof module !== 'undefined') {
       equipment: {
         weapon: null, offhand: null, helmet: null, chest: null, boots: null, back: null, ring1: null, ring2: null, amulet: null
       },
-      // TEST BUILD: starter grant of the 5 new Batch 2 chest items (Scholar's Robes, Steel
-      // Plate, Emberplate, Froststeel Plate, Arcane Vestments) so they can be equipped and
-      // reviewed via the normal Equipment screen without playing through to buy them. Remove
-      // this line once the art is approved and these go back to being earned/bought normally.
-      storage: ['chs_robes', 'chs_steel_plate', 'chs_emberplate', 'chs_froststeel', 'chs_arcane_vestments'],
+      storage: [], // items owned in town (array of itemIds for equipment, one per unit owned)
       consumablesStorage: [], // {itemId, qty} - potions/ethers/antidotes only now
       knownSpells: [], // itemIds of owned spellbooks; spells are castable for free (just MP) once known
       questLoadout: { weapon: null, offhand: null, helmet: null, chest: null, boots: null, back: null, rings: [], amulet: null, consumables: [] },
@@ -6080,14 +6076,6 @@ const Game = (function () {
     PM.addToStorage(state.player, 'chs_padded_vest');
     PM.equipItem(state.player, 'wpn_rusty_sword');
     PM.equipItem(state.player, 'chs_padded_vest');
-    // TEMP: one of each new Batch-1 chest armor, dropped straight into storage so their V2 art
-    // can be equipped/tested from the Equipment screen without needing to buy them first. Safe
-    // to remove once these are wired into the actual shop instead of only being test gear.
-    PM.addToStorage(state.player, 'chs_leather_armor');
-    PM.addToStorage(state.player, 'chs_copper_breastplate');
-    PM.addToStorage(state.player, 'chs_bronze_cuirass');
-    PM.addToStorage(state.player, 'chs_chainmail');
-    PM.addToStorage(state.player, 'chs_iron_plate');
     PM.addToStorage(state.player, 'cns_potion_small', 2);
     goTo('town');
   }
@@ -6306,26 +6294,29 @@ const Game = (function () {
     // sleeves) - the original chr_chs_padded_vest_v2.png is left in place, unused, in case
     // this revision needs to be rolled back.
     chsQuiltedVestV2:     'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_padded_vest_v2b.png',
-    // Batch 1 chest armor (extracted/aligned from the first ChatGPT batch sheet). Iron Plate's
-    // source art includes its own greaves/boots baked in - drawn under the default boots layer
-    // like every other chest piece, so there may be a visible boot-on-boot overlap until a
-    // dedicated boots item exists; flagged as a known thing to check visually.
-    chsLeatherArmorV2:      'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_leather_armor_v2.png',
-    chsCopperBreastplateV2: 'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_copper_breastplate_v2.png',
-    chsBronzeCuirassV2:     'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_bronze_cuirass_v2.png',
-    chsChainmailV2:         'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_chainmail_v2.png',
-    chsIronPlateV2:         'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_iron_plate_v2.png',
-    // Batch 2 chest armor (Arcane Vestments, Emberplate, Froststeel Plate, Scholar's Robes,
-    // Steel Plate) - scaled/aligned from standalone Approved/Armor/Chest sketches onto the
-    // shared 1024x1536 V2 canvas (matched to existing chest items' neckline/width, not drawn
-    // from a combo sheet like Batch 1). TEST BUILD: local relative paths (not yet pushed to
-    // GitHub) so this works immediately when opened from disk - swap to raw.githubusercontent.com
-    // URLs (same pattern as the items above) once approved and pushed to main.
-    chsRobesV2:            '../../01_Art/Approved/Characters/EquippedV2/chr_chs_robes_v2.png',
-    chsSteelPlateV2:       '../../01_Art/Approved/Characters/EquippedV2/chr_chs_steel_plate_v2.png',
-    chsEmberplateV2:       '../../01_Art/Approved/Characters/EquippedV2/chr_chs_emberplate_v2.png',
-    chsFroststeelV2:       '../../01_Art/Approved/Characters/EquippedV2/chr_chs_froststeel_v2.png',
-    chsArcaneVestmentsV2:  '../../01_Art/Approved/Characters/EquippedV2/chr_chs_arcane_vestments_v2.png',
+
+    // --- TEMP PREVIEW ONLY -----------------------------------------------------------------
+    // Local paths for eyeballing the Batch 2 boots-combo-sheet art before it's pushed to GitHub
+    // and promoted into Approved/. This whole block (and the matching EQUIP_ART_V2 entries plus
+    // the debug panel further down) exists only in this throwaway preview copy -- do NOT carry
+    // it into the master build. Once approved, re-point these five chest + five boots keys at
+    // raw.githubusercontent.com URLs (matching the pattern above) in the real master file.
+    // NOTE: this preview copy is based on "notebook_knight_sprint8 - Copy (2).html" (the newest
+    // COMPLETE file on disk) rather than notebook_knight_sprint8.html, which was found to be
+    // truncated mid-file -- so it's missing the Batch 1 chest-armor wiring (iron plate,
+    // chainmail, etc.) that exists in the broken file. That's a separate, bigger issue; this
+    // preview is only meant for reviewing the new Batch 2 chest+boots art itself.
+    chsRobesV2:            'chr_chs_robes_v2.png',
+    chsSteelPlateV2:       'chr_chs_steel_plate_v2.png',
+    chsEmberplateV2:       'chr_chs_emberplate_v2.png',
+    chsFroststeelV2:       'chr_chs_froststeel_v2.png',
+    chsArcaneVestmentsV2:  'chr_chs_arcane_vestments_v2.png',
+    btsWornBootsV2:        'chr_bts_worn_boots_v2.png',
+    btsCopperGreavesV2:    'chr_bts_copper_greaves_v2.png',
+    btsSwiftBootsV2:       'chr_bts_swift_boots_v2.png',
+    btsIronGreavesV2:      'chr_bts_iron_greaves_v2.png',
+    btsLeatherBootsV2:     'chr_bts_leather_boots_v2.png',
+    // --- END TEMP PREVIEW --------------------------------------------------------------------
 
     // Decorative hamlet art — bottom-anchored backdrop on the town screen
     artHamlet:          'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Town/art_hamlet.png.png',
@@ -6867,20 +6858,90 @@ const Game = (function () {
   const EQUIP_ART_V2 = {
     weapon: { wpn_rusty_sword: 'wpnRustySwordV2' },
     chest:  {
-      chs_padded_vest:        'chsQuiltedVestV2',
-      chs_leather_armor:      'chsLeatherArmorV2',
-      chs_copper_breastplate: 'chsCopperBreastplateV2',
-      chs_bronze_cuirass:     'chsBronzeCuirassV2',
-      chs_chainmail:          'chsChainmailV2',
-      chs_iron_plate:         'chsIronPlateV2',
+      chs_padded_vest: 'chsQuiltedVestV2',
+      // TEMP PREVIEW ONLY -- Batch 2 combo-sheet chest art, not yet promoted to Approved/.
       chs_robes:              'chsRobesV2',
       chs_steel_plate:        'chsSteelPlateV2',
       chs_emberplate:         'chsEmberplateV2',
       chs_froststeel:         'chsFroststeelV2',
       chs_arcane_vestments:   'chsArcaneVestmentsV2',
     },
-    boots:  {}, // no boots art yet - falls through to the default boots layer for everything
+    // TEMP PREVIEW ONLY -- first boots art, extracted from the Batch 2 combo sheet. Not yet
+    // promoted to Approved/; revert this to {} in the real master file until it is.
+    boots:  {
+      bts_worn_boots:     'btsWornBootsV2',
+      bts_copper_greaves: 'btsCopperGreavesV2',
+      bts_swift_boots:    'btsSwiftBootsV2',
+      bts_iron_greaves:   'btsIronGreavesV2',
+      bts_leather_boots:  'btsLeatherBootsV2',
+    },
   };
+
+  // --- TEMP PREVIEW ONLY: floating debug panel to eyeball the 5 Batch 2 combo pairings --------
+  // Not part of the real game. Reach the Town screen normally, then click a button below to
+  // instantly swap the doll's chest+boots art (no need to actually own/equip the items).
+  // Safe to ignore/delete this block once art review is done.
+  window.addEventListener('DOMContentLoaded', () => {
+    const panel = document.createElement('div');
+    panel.style.cssText = 'position:fixed;top:8px;right:8px;z-index:99999;background:#fff;' +
+      'border:2px solid #000;border-radius:6px;padding:8px;font:12px sans-serif;max-width:200px;' +
+      'box-shadow:0 2px 8px rgba(0,0,0,0.4);';
+    panel.innerHTML = '<div style="font-weight:bold;margin-bottom:4px;">Batch 2 preview</div>';
+    const pairs = [
+      ["Scholar's Robes + Worn Boots", 'chs_robes', 'bts_worn_boots'],
+      ['Steel Plate + Copper Greaves', 'chs_steel_plate', 'bts_copper_greaves'],
+      ['Emberplate + Swift Boots', 'chs_emberplate', 'bts_swift_boots'],
+      ['Froststeel + Iron Greaves', 'chs_froststeel', 'bts_iron_greaves'],
+      ['Arcane Vestments + Leather Boots', 'chs_arcane_vestments', 'bts_leather_boots'],
+    ];
+    pairs.forEach(([label, chestId, bootsId]) => {
+      const btn = document.createElement('button');
+      btn.textContent = label;
+      btn.style.cssText = 'display:block;width:100%;margin-bottom:4px;padding:4px;cursor:pointer;';
+      btn.onclick = () => {
+        if (!state.player) { alert('Reach the Town screen first (start/load a character).'); return; }
+        state.player.equipment.chest = chestId;
+        state.player.equipment.boots = bootsId;
+        if (state.screen !== 'town') state.screen = 'town';
+        render();
+      };
+      panel.appendChild(btn);
+    });
+    const resetBtn = document.createElement('button');
+    resetBtn.textContent = 'Reset to default';
+    resetBtn.style.cssText = 'display:block;width:100%;padding:4px;cursor:pointer;';
+    resetBtn.onclick = () => {
+      if (!state.player) return;
+      state.player.equipment.chest = null;
+      state.player.equipment.boots = null;
+      render();
+    };
+    panel.appendChild(resetBtn);
+
+    // Grant every non-quest item straight into storage/known-spells so the whole catalog can be
+    // browsed and equipped through the real Equipment/Loadout screens without playing or buying
+    // anything. Safe no-op re-run (storage just gets a second copy of stackable-looking entries;
+    // consumables/spellbooks are additive too, which is fine for a review build).
+    const grantBtn = document.createElement('button');
+    grantBtn.textContent = 'Grant ALL items';
+    grantBtn.style.cssText = 'display:block;width:100%;margin-top:6px;padding:4px;cursor:pointer;font-weight:bold;';
+    grantBtn.onclick = () => {
+      if (!state.player) { alert('Reach the Town screen first (start/load a character).'); return; }
+      let count = 0;
+      Object.values(ITEMS).forEach(item => {
+        if (item.type === ITEM_TYPE.QUEST) return; // skip quest items - don't want to interfere with quest logic
+        const qty = item.type === ITEM_TYPE.CONSUMABLE ? 5 : 1;
+        PlayerModel.addToStorage(state.player, item.id, qty);
+        count++;
+      });
+      alert(`Granted ${count} items. Open the Equipment screen to browse/equip anything.`);
+      render();
+    };
+    panel.appendChild(grantBtn);
+
+    document.body.appendChild(panel);
+  });
+  // --- END TEMP PREVIEW ------------------------------------------------------------------------
 
   // Drop-in replacement for drawTownCharacter(), used only by the Town and Equipment screens.
   // drawTownCharacter() itself is untouched above - this is a separate, additive function so

@@ -3600,11 +3600,7 @@ if (typeof module !== 'undefined') {
       equipment: {
         weapon: null, offhand: null, helmet: null, chest: null, boots: null, back: null, ring1: null, ring2: null, amulet: null
       },
-      // TEST BUILD: starter grant of the 5 new Batch 2 chest items (Scholar's Robes, Steel
-      // Plate, Emberplate, Froststeel Plate, Arcane Vestments) so they can be equipped and
-      // reviewed via the normal Equipment screen without playing through to buy them. Remove
-      // this line once the art is approved and these go back to being earned/bought normally.
-      storage: ['chs_robes', 'chs_steel_plate', 'chs_emberplate', 'chs_froststeel', 'chs_arcane_vestments'],
+      storage: [], // items owned in town (array of itemIds for equipment, one per unit owned)
       consumablesStorage: [], // {itemId, qty} - potions/ethers/antidotes only now
       knownSpells: [], // itemIds of owned spellbooks; spells are castable for free (just MP) once known
       questLoadout: { weapon: null, offhand: null, helmet: null, chest: null, boots: null, back: null, rings: [], amulet: null, consumables: [] },
@@ -6315,17 +6311,6 @@ const Game = (function () {
     chsBronzeCuirassV2:     'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_bronze_cuirass_v2.png',
     chsChainmailV2:         'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_chainmail_v2.png',
     chsIronPlateV2:         'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Characters/EquippedV2/chr_chs_iron_plate_v2.png',
-    // Batch 2 chest armor (Arcane Vestments, Emberplate, Froststeel Plate, Scholar's Robes,
-    // Steel Plate) - scaled/aligned from standalone Approved/Armor/Chest sketches onto the
-    // shared 1024x1536 V2 canvas (matched to existing chest items' neckline/width, not drawn
-    // from a combo sheet like Batch 1). TEST BUILD: local relative paths (not yet pushed to
-    // GitHub) so this works immediately when opened from disk - swap to raw.githubusercontent.com
-    // URLs (same pattern as the items above) once approved and pushed to main.
-    chsRobesV2:            '../../01_Art/Approved/Characters/EquippedV2/chr_chs_robes_v2.png',
-    chsSteelPlateV2:       '../../01_Art/Approved/Characters/EquippedV2/chr_chs_steel_plate_v2.png',
-    chsEmberplateV2:       '../../01_Art/Approved/Characters/EquippedV2/chr_chs_emberplate_v2.png',
-    chsFroststeelV2:       '../../01_Art/Approved/Characters/EquippedV2/chr_chs_froststeel_v2.png',
-    chsArcaneVestmentsV2:  '../../01_Art/Approved/Characters/EquippedV2/chr_chs_arcane_vestments_v2.png',
 
     // Decorative hamlet art — bottom-anchored backdrop on the town screen
     artHamlet:          'https://raw.githubusercontent.com/lord-malys/Notebook-Knight/main/01_Art/Approved/Town/art_hamlet.png.png',
@@ -6873,11 +6858,6 @@ const Game = (function () {
       chs_bronze_cuirass:     'chsBronzeCuirassV2',
       chs_chainmail:          'chsChainmailV2',
       chs_iron_plate:         'chsIronPlateV2',
-      chs_robes:              'chsRobesV2',
-      chs_steel_plate:        'chsSteelPlateV2',
-      chs_emberplate:         'chsEmberplateV2',
-      chs_froststeel:         'chsFroststeelV2',
-      chs_arcane_vestments:   'chsArcaneVestmentsV2',
     },
     boots:  {}, // no boots art yet - falls through to the default boots layer for everything
   };
