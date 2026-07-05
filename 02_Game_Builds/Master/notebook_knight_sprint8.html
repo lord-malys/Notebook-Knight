@@ -6059,7 +6059,8 @@ const Game = (function () {
     } catch (e) { showToast('Save failed: ' + e.message); }
   }
   function loadGame() {
-    const raw = localStorage.getItem(SAVE_KEY);
+    let raw;
+    try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { showToast('Load failed: storage unavailable.'); return false; }
     if (!raw) { showToast('No save found.'); return false; }
     try {
       state.player = JSON.parse(raw);
@@ -6068,7 +6069,7 @@ const Game = (function () {
       return true;
     } catch (e) { showToast('Load failed.'); return false; }
   }
-  function hasSave() { return !!localStorage.getItem(SAVE_KEY); }
+  function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
 
   function showToast(msg) {
     const t = $('#toast');
